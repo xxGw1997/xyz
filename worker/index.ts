@@ -15,9 +15,12 @@ export default {
       });
     } else if (url.pathname.startsWith("/api/generate-good-img")) {
       const input = url.searchParams.get("type");
-      const prompt = `根据图中的猫来编辑图片,在猫的左前方放一个胡萝卜，右前方放一个抽纸巾，并且猫的手放在${
-        input == "h" ? "胡萝卜" : "抽纸巾"
-      }上方。不要出现其他无关人的手`;
+      let prompt = "";
+      if (input == "h") {
+        prompt = `根据图中的猫来编辑图片,在猫的左前方放一个胡萝卜并且猫的手放在胡萝卜上方,右前方放一个抽纸巾。不要出现其他无关人的手`;
+      } else {
+        prompt = `根据图中的猫来编辑图片,在猫的左前方放一个胡萝卜,右前方放一个抽纸巾并且猫的手放在抽纸巾上方。不要出现其他无关人的手`;
+      }
       const imageURLs = ["https://r2.88boy.lol/pipi.jpg"];
       const API_KEY = env.GMICLOUD_APIKEY;
       const response = await fetch(
@@ -37,7 +40,7 @@ export default {
               max_images: 1,
               sequential_image_generation: "auto",
               seed: -1,
-              watermark: true,
+              watermark: false,
               response_format: "url",
             },
           }),
@@ -46,11 +49,8 @@ export default {
 
       const data = await response.json();
 
-      return Response.json({
-        data,
-      });
+      return Response.json(data);
     } else if (url.pathname.startsWith("/api/get-good-img-status")) {
-      console.log("✅✅✅");
       const request_id = url.searchParams.get("request_id");
       const API_KEY = env.GMICLOUD_APIKEY;
       const response = await fetch(
@@ -62,12 +62,9 @@ export default {
           },
         }
       );
-      console.log(response);
       const data = await response.json();
 
-      return Response.json({
-        data,
-      });
+      return Response.json(data);
     }
 
     return new Response(null, { status: 404 });
