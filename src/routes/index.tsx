@@ -1,21 +1,26 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ImageIcon, X } from "lucide-react";
-import ProfileCard from "./components/ProfileCard";
+import ProfileCard from "@/components/ProfileCard";
+// import Lightning from "@/components/Lightning";
 import iconUrl from "@/assets/iconpattern.png";
 import grainUrl from "@/assets/grain.webp";
-import LightRays from "./components/LightRays";
+import LightRays from "@/components/LightRays";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "./components/ui/button";
-// import Lightning from "./components/Lightning";
+import { Button } from "@/components/ui/button";
 
-function App() {
+export const Route = createFileRoute("/")({
+  component: Index,
+});
+
+function Index() {
   const [images, setImages] = useState<string[]>([]);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleGetImages = async () => {
-    const response = await fetch("/api/");
+    const response = await fetch("/api/get-image");
     const data: { images: string[] } = await response.json();
     setImages(data.images);
   };
@@ -99,7 +104,7 @@ function App() {
               behindGlowSize="50%"
               title=""
               avatarUrl={url}
-              iconUrl={iconUrl}
+              // iconUrl={iconUrl}
               grainUrl={grainUrl}
               showUserInfo={false}
               enableTilt={true}
@@ -112,5 +117,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
