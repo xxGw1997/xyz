@@ -17,9 +17,9 @@ export default {
       const input = url.searchParams.get("type");
       let prompt = "";
       if (input == "h") {
-        prompt = `根据图中的猫来编辑图片,在猫的左前方放一个胡萝卜并且猫的手放在胡萝卜上方,右前方放一个抽纸巾。不要出现其他无关人的手`;
+        prompt = `Edit the image based on the cat in the original photo, keeping the cat's appearance, pose, expression, and background unchanged. In the front left area from the cat's perspective, place a fresh orange carrot on the ground. The cat's one front paw is extended and hovering directly above the carrot, as if about to touch or grab it. In the front right area, place a rectangular box of tissues (tissue box with the top open and some white tissues slightly pulled out) on the ground. Natural and cute composition, foreground in sharp focus, warm natural lighting, highly detailed, realistic.`;
       } else {
-        prompt = `根据图中的猫来编辑图片,在猫的左前方放一个胡萝卜,右前方放一个抽纸巾并且猫的手放在抽纸巾上方。不要出现其他无关人的手`;
+        prompt = `Edit the image based on the cat in the original photo, keeping the cat's appearance, pose, expression, and background exactly the same. In the front left from the cat's view, place a fresh vibrant orange carrot on the ground. In the front right, place a square tissue box (light-colored box with top open, several soft white tissues slightly pulled out, looking fluffy and playful). The cat's one front paw is extended forward, hovering directly above the tissue box, as if curiously about to paw at or touch the tissues. Adorable and playful composition, sharp foreground focus, warm natural lighting, highly detailed, photorealistic`;
       }
       const imageURLs = ["https://r2.88boy.lol/pipi.jpg"];
       const API_KEY = env.GMICLOUD_APIKEY;

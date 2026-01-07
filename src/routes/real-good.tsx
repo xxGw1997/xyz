@@ -1,6 +1,7 @@
+import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { useRef, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/real-good")({
   component: About,
@@ -39,9 +40,13 @@ function About() {
   };
 
   return (
-    <div className="">
-      <div className="flex justify-center items-center">
-        <img className="size-1/5 object-contain" src={imageUrl} />
+    <div className="flex h-full flex-col justify-center items-center gap-y-10">
+      <div className="flex justify-center items-center w-4/5 h-2/3 max-w-xl">
+        {loading ? (
+          <Skeleton className="w-full h-full" />
+        ) : (
+          <img className="w-full h-full object-contain" src={imageUrl} />
+        )}
       </div>
 
       <div className="flex justify-center items-center gap-x-44">
