@@ -30,10 +30,10 @@ export class Veet extends DurableObject<Env> {
       ws.send(JSON.stringify({ ready: true, id: session.id }));
     }
 
-    this.boradcast(ws, message);
+    this.broadcast(ws, message);
   }
 
-  boradcast(sender: WebSocket, message: string | ArrayBuffer) {
+  broadcast(sender: WebSocket, message: string | ArrayBuffer) {
     const id = this.sessions.get(sender)!.id;
 
     for (const [ws] of this.sessions) {
@@ -67,7 +67,7 @@ export class Veet extends DurableObject<Env> {
     const session = this.sessions.get(ws);
     if (!session?.id) return;
 
-    this.boradcast(ws, JSON.stringify({ type: "left" }));
+    this.broadcast(ws, JSON.stringify({ type: "left" }));
 
     this.sessions.delete(ws);
   }
