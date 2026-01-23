@@ -20,7 +20,7 @@ function Index() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleGetImages = async () => {
-    const response = await fetch("/api/get-image");
+    const response = await fetch("/api/gen-image/get-image");
     const data: { images: string[] } = await response.json();
     setImages(data.images);
   };

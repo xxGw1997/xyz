@@ -20,7 +20,7 @@ function About() {
     setLoading(true);
     setIsGenerated(false);
     setShowText(false);
-    const res = await fetch(`/api/generate-good-img?type=${type}`);
+    const res = await fetch(`/api/gen-image/generate-good-img?type=${type}`);
     const data = await res.json();
     if (data.status === "success") {
       getImageStatus(data.request_id as string);
@@ -32,7 +32,7 @@ function About() {
 
   const getImageStatus = async (request_id: string) => {
     const res = await fetch(
-      `/api/get-good-img-status?request_id=${request_id}`
+      `/api/gen-image/get-good-img-status?request_id=${request_id}`
     );
     const data = await res.json();
     setLoading(false);

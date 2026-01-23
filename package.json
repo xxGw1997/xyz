@@ -21,6 +21,7 @@
 		"canvas-confetti": "^1.9.4",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"hono": "^4.11.5",
 		"lucide-react": "^0.562.0",
 		"ogl": "^1.0.11",
 		"react": "^19.1.1",
