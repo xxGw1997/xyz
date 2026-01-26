@@ -30,6 +30,14 @@
       "new_sqlite_classes": ["Veet"]
     }
   ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_id": "df22fed5-911f-44f0-b92a-4dbcfdb0da08",
+      "database_name": "db",
+      "migrations_dir": "./migrations",
+    }
+  ],
   "routes": [
     {
       "pattern": "zzwlove.xyz",
