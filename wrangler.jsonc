@@ -33,9 +33,10 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_id": "df22fed5-911f-44f0-b92a-4dbcfdb0da08",
+      "database_id": "780eda95-8ff3-4dce-9148-f9d1dde20e1b",
       "database_name": "db",
       "migrations_dir": "./migrations",
+      "remote": true
     }
   ],
   "routes": [

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { createDb } from "../lib/db";
 
 const genImageRoute = new Hono<{ Bindings: Env }>();
 
@@ -38,7 +39,7 @@ genImageRoute.get("/generate-good-img", async (c) => {
           response_format: "url",
         },
       }),
-    }
+    },
   );
 
   const data = await response.json();
@@ -55,11 +56,19 @@ genImageRoute.get("/get-good-img-status", async (c) => {
       headers: {
         Authorization: `Bearer ${API_KEY}`,
       },
-    }
+    },
   );
   const data = await response.json();
 
   return c.json(data);
+});
+
+genImageRoute.get("/test", async (c) => {
+  const db = createDb();
+  const tables = await db.run(
+    `SELECT name AS table_name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%';`,
+  );
+  return c.json({ tables });
 });
 
 export default genImageRoute;
