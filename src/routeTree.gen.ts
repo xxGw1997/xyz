@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RealGoodRouteImport } from './routes/real-good'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HelloIndexRouteImport } from './routes/hello/index'
+import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
 
 const RealGoodRoute = RealGoodRouteImport.update({
   id: '/real-good',
@@ -22,31 +24,49 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelloIndexRoute = HelloIndexRouteImport.update({
+  id: '/hello/',
+  path: '/hello/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelloRoomIdRoute = HelloRoomIdRouteImport.update({
+  id: '/hello/$roomId',
+  path: '/hello/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/real-good': typeof RealGoodRoute
+  '/hello/$roomId': typeof HelloRoomIdRoute
+  '/hello': typeof HelloIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/real-good': typeof RealGoodRoute
+  '/hello/$roomId': typeof HelloRoomIdRoute
+  '/hello': typeof HelloIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/real-good': typeof RealGoodRoute
+  '/hello/$roomId': typeof HelloRoomIdRoute
+  '/hello/': typeof HelloIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/real-good'
+  fullPaths: '/' | '/real-good' | '/hello/$roomId' | '/hello'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/real-good'
-  id: '__root__' | '/' | '/real-good'
+  to: '/' | '/real-good' | '/hello/$roomId' | '/hello'
+  id: '__root__' | '/' | '/real-good' | '/hello/$roomId' | '/hello/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RealGoodRoute: typeof RealGoodRoute
+  HelloRoomIdRoute: typeof HelloRoomIdRoute
+  HelloIndexRoute: typeof HelloIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hello/': {
+      id: '/hello/'
+      path: '/hello'
+      fullPath: '/hello'
+      preLoaderRoute: typeof HelloIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hello/$roomId': {
+      id: '/hello/$roomId'
+      path: '/hello/$roomId'
+      fullPath: '/hello/$roomId'
+      preLoaderRoute: typeof HelloRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RealGoodRoute: RealGoodRoute,
+  HelloRoomIdRoute: HelloRoomIdRoute,
+  HelloIndexRoute: HelloIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
