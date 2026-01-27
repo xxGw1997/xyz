@@ -7,6 +7,7 @@
   "name": "xyz",
   "main": "worker/index.ts",
   "compatibility_date": "2025-12-25",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist/",
     "not_found_handling": "single-page-application",
@@ -35,8 +36,7 @@
       "binding": "DB",
       "database_id": "780eda95-8ff3-4dce-9148-f9d1dde20e1b",
       "database_name": "db",
-      "migrations_dir": "./migrations",
-      "remote": true
+      "migrations_dir": "./migrations"
     }
   ],
   "routes": [
