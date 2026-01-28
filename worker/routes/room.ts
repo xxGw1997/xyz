@@ -1,6 +1,10 @@
 import { Hono } from "hono";
+import { authMiddleware } from "../middlewares/auth.middleware";
+import type { AuthVar } from "../types";
 
-const roomRoute = new Hono<{ Bindings: Env }>();
+const roomRoute = new Hono<{ Bindings: Env; Variables: AuthVar }>();
+
+roomRoute.use(authMiddleware);
 
 roomRoute.get("/connect", (c) => {
   const upgradeHeader = c.req.header("Upgrade");
@@ -33,7 +37,7 @@ roomRoute.get("/gen-ice-servers", async (c) => {
 
     if (!response.ok) {
       throw new Error(
-        `Cloudflare API 请求失败: ${response.status} ${response.statusText}`,
+        `Cloudflare API 请求失败: ${response.status} ${response.statusText}`
       );
     }
 
@@ -44,6 +48,10 @@ roomRoute.get("/gen-ice-servers", async (c) => {
       data: data,
     });
   } catch (error) {}
+});
+
+roomRoute.get("/test", (c) => {
+  return c.json({ data: "hhh" });
 });
 
 export default roomRoute;

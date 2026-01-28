@@ -10,13 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RealGoodRouteImport } from './routes/real-good'
+import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelloIndexRouteImport } from './routes/hello/index'
 import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
+import { Route as authenticatedDashboardRouteImport } from './routes/(authenticated)/dashboard'
 
 const RealGoodRoute = RealGoodRouteImport.update({
   id: '/real-good',
   path: '/real-good',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authenticatedRouteRoute = authenticatedRouteRouteImport.update({
+  id: '/(authenticated)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -34,36 +40,53 @@ const HelloRoomIdRoute = HelloRoomIdRouteImport.update({
   path: '/hello/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const authenticatedDashboardRoute = authenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/real-good': typeof RealGoodRoute
+  '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello': typeof HelloIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/real-good': typeof RealGoodRoute
+  '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello': typeof HelloIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/(authenticated)': typeof authenticatedRouteRouteWithChildren
   '/real-good': typeof RealGoodRoute
+  '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello/': typeof HelloIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/real-good' | '/hello/$roomId' | '/hello'
+  fullPaths: '/' | '/real-good' | '/dashboard' | '/hello/$roomId' | '/hello'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/real-good' | '/hello/$roomId' | '/hello'
-  id: '__root__' | '/' | '/real-good' | '/hello/$roomId' | '/hello/'
+  to: '/' | '/real-good' | '/dashboard' | '/hello/$roomId' | '/hello'
+  id:
+    | '__root__'
+    | '/'
+    | '/(authenticated)'
+    | '/real-good'
+    | '/(authenticated)/dashboard'
+    | '/hello/$roomId'
+    | '/hello/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  authenticatedRouteRoute: typeof authenticatedRouteRouteWithChildren
   RealGoodRoute: typeof RealGoodRoute
   HelloRoomIdRoute: typeof HelloRoomIdRoute
   HelloIndexRoute: typeof HelloIndexRoute
@@ -76,6 +99,13 @@ declare module '@tanstack/react-router' {
       path: '/real-good'
       fullPath: '/real-good'
       preLoaderRoute: typeof RealGoodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(authenticated)': {
+      id: '/(authenticated)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof authenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -99,11 +129,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelloRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(authenticated)/dashboard': {
+      id: '/(authenticated)/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof authenticatedDashboardRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
+interface authenticatedRouteRouteChildren {
+  authenticatedDashboardRoute: typeof authenticatedDashboardRoute
+}
+
+const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
+  authenticatedDashboardRoute: authenticatedDashboardRoute,
+}
+
+const authenticatedRouteRouteWithChildren =
+  authenticatedRouteRoute._addFileChildren(authenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  authenticatedRouteRoute: authenticatedRouteRouteWithChildren,
   RealGoodRoute: RealGoodRoute,
   HelloRoomIdRoute: HelloRoomIdRoute,
   HelloIndexRoute: HelloIndexRoute,

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ImageIcon, X } from "lucide-react";
 import ProfileCard from "@/components/ProfileCard";
@@ -9,12 +9,19 @@ import LightRays from "@/components/LightRays";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { AuthInlineActions } from "@/components/auth-actions";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  return (
+    <>
+      <Link to="/dashboard"> Dashboard</Link>
+      <AuthInlineActions />
+    </>
+  );
   const [images, setImages] = useState<string[]>([]);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
