@@ -10,15 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RealGoodRouteImport } from './routes/real-good'
+import { Route as ProfileCardRouteImport } from './routes/profile-card'
 import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelloIndexRouteImport } from './routes/hello/index'
 import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
 import { Route as authenticatedDashboardRouteImport } from './routes/(authenticated)/dashboard'
+import { Route as authenticatedChatRouteImport } from './routes/(authenticated)/chat'
 
 const RealGoodRoute = RealGoodRouteImport.update({
   id: '/real-good',
   path: '/real-good',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileCardRoute = ProfileCardRouteImport.update({
+  id: '/profile-card',
+  path: '/profile-card',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authenticatedRouteRoute = authenticatedRouteRouteImport.update({
@@ -45,17 +52,26 @@ const authenticatedDashboardRoute = authenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedChatRoute = authenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/profile-card': typeof ProfileCardRoute
   '/real-good': typeof RealGoodRoute
+  '/chat': typeof authenticatedChatRoute
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello': typeof HelloIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/profile-card': typeof ProfileCardRoute
   '/real-good': typeof RealGoodRoute
+  '/chat': typeof authenticatedChatRoute
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello': typeof HelloIndexRoute
@@ -64,21 +80,39 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
+  '/profile-card': typeof ProfileCardRoute
   '/real-good': typeof RealGoodRoute
+  '/(authenticated)/chat': typeof authenticatedChatRoute
   '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello/': typeof HelloIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/real-good' | '/dashboard' | '/hello/$roomId' | '/hello'
+  fullPaths:
+    | '/'
+    | '/profile-card'
+    | '/real-good'
+    | '/chat'
+    | '/dashboard'
+    | '/hello/$roomId'
+    | '/hello'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/real-good' | '/dashboard' | '/hello/$roomId' | '/hello'
+  to:
+    | '/'
+    | '/profile-card'
+    | '/real-good'
+    | '/chat'
+    | '/dashboard'
+    | '/hello/$roomId'
+    | '/hello'
   id:
     | '__root__'
     | '/'
     | '/(authenticated)'
+    | '/profile-card'
     | '/real-good'
+    | '/(authenticated)/chat'
     | '/(authenticated)/dashboard'
     | '/hello/$roomId'
     | '/hello/'
@@ -87,6 +121,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   authenticatedRouteRoute: typeof authenticatedRouteRouteWithChildren
+  ProfileCardRoute: typeof ProfileCardRoute
   RealGoodRoute: typeof RealGoodRoute
   HelloRoomIdRoute: typeof HelloRoomIdRoute
   HelloIndexRoute: typeof HelloIndexRoute
@@ -99,6 +134,13 @@ declare module '@tanstack/react-router' {
       path: '/real-good'
       fullPath: '/real-good'
       preLoaderRoute: typeof RealGoodRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile-card': {
+      id: '/profile-card'
+      path: '/profile-card'
+      fullPath: '/profile-card'
+      preLoaderRoute: typeof ProfileCardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(authenticated)': {
@@ -136,14 +178,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedDashboardRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/chat': {
+      id: '/(authenticated)/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof authenticatedChatRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
 interface authenticatedRouteRouteChildren {
+  authenticatedChatRoute: typeof authenticatedChatRoute
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
+  authenticatedChatRoute: authenticatedChatRoute,
   authenticatedDashboardRoute: authenticatedDashboardRoute,
 }
 
@@ -153,6 +204,7 @@ const authenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   authenticatedRouteRoute: authenticatedRouteRouteWithChildren,
+  ProfileCardRoute: ProfileCardRoute,
   RealGoodRoute: RealGoodRoute,
   HelloRoomIdRoute: HelloRoomIdRoute,
   HelloIndexRoute: HelloIndexRoute,

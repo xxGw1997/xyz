@@ -8,7 +8,6 @@ export const Route = createFileRoute("/(authenticated)")({
 
 function RouteComponent() {
   const userInfo = useAuthContext();
-  console.log(userInfo);
   if (!userInfo.session.data) {
     return <LoginDialog defaultOpen />;
   }

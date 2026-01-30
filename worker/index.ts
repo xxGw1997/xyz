@@ -20,3 +20,4 @@ export default app;
 
 export { GenerateStorageImageWorkflow } from "./workflows/generate-storage-image-workflow";
 export { Veet } from "./durable-objects/veet";
+export { ChatRoom } from "./durable-objects/chat-room";

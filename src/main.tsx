@@ -7,6 +7,7 @@ import "./index.css";
 import { routeTree } from "./routeTree.gen";
 import { AuthProvider, useAuth } from "./components/providers/auth-provider";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "./components/providers/theme-provider";
 
 // Create a new router instance
 const router = createRouter({
@@ -36,9 +37,11 @@ function InnerApp() {
 
 function App() {
   return (
-    <AuthProvider>
-      <InnerApp />
-    </AuthProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <AuthProvider>
+        <InnerApp />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

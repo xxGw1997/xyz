@@ -142,7 +142,6 @@
   }
   body,
   #root {
-    @apply w-screen h-screen;
     @apply bg-background text-foreground;
   }
 }

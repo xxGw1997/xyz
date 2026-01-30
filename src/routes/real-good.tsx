@@ -78,7 +78,7 @@ function About() {
   };
 
   return (
-    <div className="flex h-full flex-col justify-center items-center gap-y-10 relative">
+    <div className="flex h-screen flex-col justify-center items-center gap-y-10 relative">
       {isGenerated && showText && (
         <AuroraText
           className="text-8xl absolute top-24"

@@ -50,8 +50,21 @@ roomRoute.get("/gen-ice-servers", async (c) => {
   } catch (error) {}
 });
 
-roomRoute.get("/test", (c) => {
-  return c.json({ data: "hhh" });
+roomRoute.get("/chat/:toId/join", async (c) => {
+  const upgradeHeader = c.req.header("Upgrade");
+  if (upgradeHeader !== "websocket") {
+    return c.text("Expected Upgrade: websocket", 426);
+  }
+  const userId = c.get("user").id;
+  const toId = c.req.param("toId");
+  if (!userId || !toId) {
+    return c.json({ error: "Bad request" }, 401);
+  }
+
+  const id = c.env.CHAT_ROOM.idFromName("zzw");
+  const stub = c.env.CHAT_ROOM.get(id);
+
+  return stub.fetch(c.req.raw);
 });
 
 export default roomRoute;
