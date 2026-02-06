@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-
-export interface Message {
-  id: string;
-  content: string;
-  sender: string;
-  timestamp: Date;
-  type: "user" | "system" | "other";
-}
+import {
+  type UserMessage,
+  type Message,
+  MessageSchema,
+} from "../../worker/types";
 
 interface UseWebSocketOptions {
   url: string;
@@ -51,27 +48,30 @@ export function useWebSocket({
       };
 
       ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          const message: Message = {
-            id: data.id || crypto.randomUUID(),
-            content: data.content || data.message || event.data,
-            sender: data.sender || "Unknown",
-            timestamp: new Date(data.timestamp || Date.now()),
-            type: data.type || "other",
-          };
-          onMessage?.(message);
-        } catch {
-          // If not JSON, treat as plain text
-          const message: Message = {
-            id: crypto.randomUUID(),
-            content: event.data,
-            sender: "System",
-            timestamp: new Date(),
-            type: "system",
-          };
-          onMessage?.(message);
-        }
+        const data = MessageSchema.parse(JSON.parse(event.data));
+        onMessage?.(data);
+
+        // try {
+        //   const data = JSON.parse(event.data);
+        //   const message: Message = {
+        //     id: data.id || crypto.randomUUID(),
+        //     content: data.content || data.message || event.data,
+        //     sender: data.sender || "Unknown",
+        //     timestamp: new Date(data.timestamp || Date.now()),
+        //     type: data.type || "other",
+        //   };
+        //   onMessage?.(message);
+        // } catch {
+        //   // If not JSON, treat as plain text
+        //   const message: Message = {
+        //     id: crypto.randomUUID(),
+        //     content: event.data,
+        //     sender: "System",
+        //     timestamp: new Date(),
+        //     type: "system",
+        //   };
+        //   onMessage?.(message);
+        // }
       };
 
       ws.onclose = () => {
@@ -117,10 +117,9 @@ export function useWebSocket({
     wsRef.current = null;
   }, [reconnectAttempts]);
 
-  const sendMessage = useCallback((message: string | object) => {
+  const sendMessage = useCallback((message: UserMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const data =
-        typeof message === "string" ? message : JSON.stringify(message);
+      const data = JSON.stringify(message);
       wsRef.current.send(data);
       return true;
     }

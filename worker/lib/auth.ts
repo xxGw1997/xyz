@@ -11,7 +11,7 @@ export const auth = betterAuth({
     provider: "sqlite",
     schema,
   }),
-  baseURL: env.BASE_URL,
+  baseURL: import.meta.env.VITE_BASE_URL,
   secret: env.BETTER_AUTH_SECRET,
   plugins: [
     magicLink({

@@ -16,7 +16,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelloIndexRouteImport } from './routes/hello/index'
 import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
 import { Route as authenticatedDashboardRouteImport } from './routes/(authenticated)/dashboard'
-import { Route as authenticatedChatRouteImport } from './routes/(authenticated)/chat'
+import { Route as authenticatedChatIndexRouteImport } from './routes/(authenticated)/chat/index'
+import { Route as authenticatedChatRoomIdRouteImport } from './routes/(authenticated)/chat/$roomId'
 
 const RealGoodRoute = RealGoodRouteImport.update({
   id: '/real-good',
@@ -52,9 +53,14 @@ const authenticatedDashboardRoute = authenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
-const authenticatedChatRoute = authenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
+const authenticatedChatIndexRoute = authenticatedChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
+const authenticatedChatRoomIdRoute = authenticatedChatRoomIdRouteImport.update({
+  id: '/chat/$roomId',
+  path: '/chat/$roomId',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
 
@@ -62,19 +68,21 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile-card': typeof ProfileCardRoute
   '/real-good': typeof RealGoodRoute
-  '/chat': typeof authenticatedChatRoute
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello': typeof HelloIndexRoute
+  '/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/chat': typeof authenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile-card': typeof ProfileCardRoute
   '/real-good': typeof RealGoodRoute
-  '/chat': typeof authenticatedChatRoute
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello': typeof HelloIndexRoute
+  '/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/chat': typeof authenticatedChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,10 +90,11 @@ export interface FileRoutesById {
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
   '/profile-card': typeof ProfileCardRoute
   '/real-good': typeof RealGoodRoute
-  '/(authenticated)/chat': typeof authenticatedChatRoute
   '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/hello/': typeof HelloIndexRoute
+  '/(authenticated)/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/(authenticated)/chat/': typeof authenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -93,29 +102,32 @@ export interface FileRouteTypes {
     | '/'
     | '/profile-card'
     | '/real-good'
-    | '/chat'
     | '/dashboard'
     | '/hello/$roomId'
     | '/hello'
+    | '/chat/$roomId'
+    | '/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/profile-card'
     | '/real-good'
-    | '/chat'
     | '/dashboard'
     | '/hello/$roomId'
     | '/hello'
+    | '/chat/$roomId'
+    | '/chat'
   id:
     | '__root__'
     | '/'
     | '/(authenticated)'
     | '/profile-card'
     | '/real-good'
-    | '/(authenticated)/chat'
     | '/(authenticated)/dashboard'
     | '/hello/$roomId'
     | '/hello/'
+    | '/(authenticated)/chat/$roomId'
+    | '/(authenticated)/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,24 +190,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedDashboardRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
-    '/(authenticated)/chat': {
-      id: '/(authenticated)/chat'
+    '/(authenticated)/chat/': {
+      id: '/(authenticated)/chat/'
       path: '/chat'
       fullPath: '/chat'
-      preLoaderRoute: typeof authenticatedChatRouteImport
+      preLoaderRoute: typeof authenticatedChatIndexRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
+    '/(authenticated)/chat/$roomId': {
+      id: '/(authenticated)/chat/$roomId'
+      path: '/chat/$roomId'
+      fullPath: '/chat/$roomId'
+      preLoaderRoute: typeof authenticatedChatRoomIdRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
   }
 }
 
 interface authenticatedRouteRouteChildren {
-  authenticatedChatRoute: typeof authenticatedChatRoute
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
+  authenticatedChatRoomIdRoute: typeof authenticatedChatRoomIdRoute
+  authenticatedChatIndexRoute: typeof authenticatedChatIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
-  authenticatedChatRoute: authenticatedChatRoute,
   authenticatedDashboardRoute: authenticatedDashboardRoute,
+  authenticatedChatRoomIdRoute: authenticatedChatRoomIdRoute,
+  authenticatedChatIndexRoute: authenticatedChatIndexRoute,
 }
 
 const authenticatedRouteRouteWithChildren =

@@ -1,20 +1,20 @@
 import { Hono } from "hono";
 
 import genImageRoute from "./routes/gen-image";
-import roomRoute from "./routes/room";
+import { roomRoute } from "./routes/room";
 import { auth } from "./lib/auth";
 
 const app = new Hono<{
   Bindings: Env;
 }>();
 
-app
+export const route = app
   .basePath("/api")
   .on(["POST", "GET"], "/auth/*", (c) => {
     return auth.handler(c.req.raw);
   })
   .route("/gen-image", genImageRoute)
-  .route("/room", roomRoute);
+  .route("/room", roomRoute)
 
 export default app;
 

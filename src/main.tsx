@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 
 // Import the generated route tree
@@ -9,12 +10,16 @@ import { AuthProvider, useAuth } from "./components/providers/auth-provider";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/providers/theme-provider";
 
+const queryClient = new QueryClient();
+
 // Create a new router instance
 const router = createRouter({
   routeTree,
   context: {
+    queryClient,
     auth: undefined!,
   },
+  scrollRestoration: true,
 });
 
 // Register the router instance for type safety
@@ -30,7 +35,9 @@ function InnerApp() {
   return (
     <>
       <Toaster position="top-center" />
-      <RouterProvider router={router} context={{ auth }} />
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} context={{ auth }} />
+      </QueryClientProvider>
     </>
   );
 }

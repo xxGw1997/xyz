@@ -1,4 +1,4 @@
-import { Github, X, Mail, Twitter } from "lucide-react";
+import { Github, Mail, Twitter } from "lucide-react";
 
 const socialLinks = [
   {

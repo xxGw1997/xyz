@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Github, Loader2 } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Field, FieldGroup, FieldLabel, FieldSeparator } from "./ui/field";
+import { Field, FieldGroup, FieldLabel } from "./ui/field";
 import { Input } from "./ui/input";
 import { authClient } from "@/lib/auth-client";
 
