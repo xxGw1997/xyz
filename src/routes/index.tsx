@@ -9,6 +9,13 @@ export const Route = createFileRoute("/")({
 
 const projects = [
   {
+    title: "扑克牌 24 点",
+    description: "经典益智游戏，挑战模式随机发牌，解答模式自选牌组",
+    href: "/p24",
+    tags: ["React", "TypeScript", "Algorithm"],
+    year: "2026",
+  },
+  {
     title: "A Chat App build on cloudflare worker",
     description: "A chat application, Login your account to explore",
     href: "/chat",
