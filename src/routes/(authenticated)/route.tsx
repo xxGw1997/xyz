@@ -9,7 +9,11 @@ export const Route = createFileRoute("/(authenticated)")({
 function RouteComponent() {
   const userInfo = useAuthContext();
   if (!userInfo.session.data) {
-    return <LoginDialog defaultOpen />;
+    return (
+      <div className="w-full h-screen flex justify-center items-center">
+        <LoginDialog defaultOpen />
+      </div>
+    );
   }
 
   return <Outlet />;

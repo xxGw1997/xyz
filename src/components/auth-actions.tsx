@@ -45,7 +45,7 @@ export function LoginDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Welcome Cloudflare next template</DialogTitle>
+          <DialogTitle>zz labs</DialogTitle>
           <DialogDescription>
             Sign in to keep reading and managing content
           </DialogDescription>
