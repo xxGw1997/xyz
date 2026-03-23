@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card as UICard, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { PlayingCard } from "./playing-card";
+import { PlayingCard } from "@/components/p24/playing-card";
 import {
   type Card,
   type SolveResult,
@@ -11,7 +11,7 @@ import {
   trySolve,
   getCardDisplayValue,
   TARGET,
-} from "./solver";
+} from "@/lib/p24/solver";
 
 type GameStatus = "idle" | "dealt" | "revealed";
 

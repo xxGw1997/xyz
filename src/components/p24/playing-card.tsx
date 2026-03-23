@@ -4,7 +4,7 @@ import {
   getCardDisplayValue,
   getSuitSymbol,
   isRedSuit,
-} from "./solver";
+} from "@/lib/p24/solver";
 
 interface PlayingCardProps {
   card: Card;

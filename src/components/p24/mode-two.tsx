@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card as UICard, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { PlayingCard } from "./playing-card";
+import { PlayingCard } from "@/components/p24/playing-card";
 import {
   type Card,
   trySolve,
@@ -12,7 +12,7 @@ import {
   isRedSuit,
   SUITS,
   TARGET,
-} from "./solver";
+} from "@/lib/p24/solver";
 
 type VerifyResult = "correct" | "wrong" | "invalid";
 

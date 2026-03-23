@@ -50,7 +50,15 @@ function Index() {
           <p className="text-muted-foreground leading-relaxed text-pretty max-w-xl">
             <span className="italic text-foreground/80">探索创意与技术。</span>{" "}
             这里是我的个人实验室，记录着对设计与开发的持续探索。每个项目都是一次尝试，
-            将想法转化为可交互的体验。
+            将想法转化为可交互的体验。欢迎访问我的{" "}
+            <a
+              href="https://88boy.lol"
+              target="_blank"
+              className="text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground transition-colors"
+            >
+              个人博客
+            </a>{" "}
+            了解更多。
           </p>
           <div className="mt-6">
             <SocialLinks />
