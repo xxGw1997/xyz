@@ -15,6 +15,7 @@ import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as P24IndexRouteImport } from './routes/p24/index'
 import { Route as HelloIndexRouteImport } from './routes/hello/index'
+import { Route as FuckIndexRouteImport } from './routes/fuck/index'
 import { Route as DrawIndexRouteImport } from './routes/draw/index'
 import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
 import { Route as authenticatedDashboardRouteImport } from './routes/(authenticated)/dashboard'
@@ -50,6 +51,11 @@ const HelloIndexRoute = HelloIndexRouteImport.update({
   path: '/hello/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FuckIndexRoute = FuckIndexRouteImport.update({
+  id: '/fuck/',
+  path: '/fuck/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DrawIndexRoute = DrawIndexRouteImport.update({
   id: '/draw/',
   path: '/draw/',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/draw': typeof DrawIndexRoute
+  '/fuck': typeof FuckIndexRoute
   '/hello': typeof HelloIndexRoute
   '/p24': typeof P24IndexRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/draw': typeof DrawIndexRoute
+  '/fuck': typeof FuckIndexRoute
   '/hello': typeof HelloIndexRoute
   '/p24': typeof P24IndexRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/draw/': typeof DrawIndexRoute
+  '/fuck/': typeof FuckIndexRoute
   '/hello/': typeof HelloIndexRoute
   '/p24/': typeof P24IndexRoute
   '/(authenticated)/chat/$roomId': typeof authenticatedChatRoomIdRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/hello/$roomId'
     | '/draw'
+    | '/fuck'
     | '/hello'
     | '/p24'
     | '/chat/$roomId'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/hello/$roomId'
     | '/draw'
+    | '/fuck'
     | '/hello'
     | '/p24'
     | '/chat/$roomId'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/(authenticated)/dashboard'
     | '/hello/$roomId'
     | '/draw/'
+    | '/fuck/'
     | '/hello/'
     | '/p24/'
     | '/(authenticated)/chat/$roomId'
@@ -161,6 +173,7 @@ export interface RootRouteChildren {
   RealGoodRoute: typeof RealGoodRoute
   HelloRoomIdRoute: typeof HelloRoomIdRoute
   DrawIndexRoute: typeof DrawIndexRoute
+  FuckIndexRoute: typeof FuckIndexRoute
   HelloIndexRoute: typeof HelloIndexRoute
   P24IndexRoute: typeof P24IndexRoute
 }
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/hello'
       fullPath: '/hello'
       preLoaderRoute: typeof HelloIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fuck/': {
+      id: '/fuck/'
+      path: '/fuck'
+      fullPath: '/fuck'
+      preLoaderRoute: typeof FuckIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/draw/': {
@@ -269,6 +289,7 @@ const rootRouteChildren: RootRouteChildren = {
   RealGoodRoute: RealGoodRoute,
   HelloRoomIdRoute: HelloRoomIdRoute,
   DrawIndexRoute: DrawIndexRoute,
+  FuckIndexRoute: FuckIndexRoute,
   HelloIndexRoute: HelloIndexRoute,
   P24IndexRoute: P24IndexRoute,
 }
