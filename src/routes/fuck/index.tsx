@@ -18,11 +18,11 @@ type RecordBook = {
 };
 
 const STORAGE_KEY = "pulse-control-records";
-const GAME_LENGTH = 45;
+const GAME_LENGTH = 90;
 const DIFFICULTIES: Record<Difficulty, { label: string; gain: number; cooling: number }> = {
-  starter: { label: "新手", gain: 0.75, cooling: 1.35 },
-  focus: { label: "专注", gain: 0.95, cooling: 1.05 },
-  extreme: { label: "极限", gain: 1.2, cooling: 0.78 },
+  starter: { label: "新手", gain: 1.55, cooling: 1.35 },
+  focus: { label: "专注", gain: 1.85, cooling: 1.05 },
+  extreme: { label: "极限", gain: 2.2, cooling: 0.78 },
 };
 
 const DEFAULT_RECORDS: RecordBook = {
@@ -155,9 +155,9 @@ function usePulseControl() {
         return next;
       });
       setExcitement((value) => {
-        const speed = Math.min(motionRef.current / 120, 1.5);
+        const speed = Math.min(motionRef.current / 90, 1.8);
         const change = inputRef.current
-          ? speed * 2.1 * config.gain * dt * 10
+          ? speed * 3.35 * config.gain * dt * 10
           : -config.cooling * dt * 10;
         const next = Math.max(0, Math.min(100, value + change));
         const inCritical = next >= 80 && next < 100;
@@ -216,7 +216,7 @@ function usePulseControl() {
     if (paused || ended || !isReady) return;
     inputRef.current = true;
     lastY.current = y;
-    setPistonPosition(position);
+    setPistonPosition(Math.max(20, Math.min(80, position)));
     setInputting(true);
   }, [ended, isReady, paused]);
 
@@ -224,13 +224,13 @@ function usePulseControl() {
     if (!inputRef.current || lastY.current === null) return;
     const distance = y - lastY.current;
     const direction = Math.sign(distance);
-    setPistonPosition(Math.max(8, Math.min(88, position)));
+    setPistonPosition(Math.max(20, Math.min(80, position)));
     if (direction < 0 && lastDirection.current >= 0) {
       strokeArmed.current = true;
       setFeedback("活塞已复位 · 向下压送以注入能量");
     }
     if (direction > 0 && strokeArmed.current && Math.abs(distance) > 4) {
-      motionRef.current = Math.min(180, motionRef.current + Math.abs(distance) * 4);
+      motionRef.current = Math.min(260, motionRef.current + Math.abs(distance) * 7);
       strokeArmed.current = false;
       setPumpCount((value) => value + 1);
       setFeedback("能量已压入储能管 · 继续上拉复位");
@@ -271,7 +271,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone: str
 
 function EnergyPump({ excitement, inputting, pistonPosition, pumpCount, critical, danger, released }: { excitement: number; inputting: boolean; pistonPosition: number; pumpCount: number; critical: boolean; danger: boolean; released: boolean }) {
   const liquidTone = danger ? "from-red-500 via-orange-400 to-amber-200" : critical ? "from-amber-500 via-orange-300 to-yellow-100" : "from-cyan-500 via-sky-300 to-cyan-100";
-  const travel = ((pistonPosition - 50) / 50) * 88;
+  const travel = ((pistonPosition - 50) / 30) * 74;
   return <div className="relative h-[340px] w-[290px] sm:h-[380px] sm:w-[330px]" aria-hidden="true">
     {released && <><div className={`absolute left-1/2 top-[-74px] h-32 w-16 -translate-x-1/2 rounded-full bg-gradient-to-t ${liquidTone} opacity-95 blur-sm animate-[pulse_.22s_ease-in-out_infinite]`} /><div className="absolute left-1/2 top-[-48px] h-16 w-44 -translate-x-1/2 rounded-[100%] bg-cyan-200/60 blur-xl" /><div className="absolute left-[43%] top-[-36px] h-24 w-2 rotate-12 rounded-full bg-cyan-100/80 blur-[1px]" /><div className="absolute left-[56%] top-[-38px] h-24 w-2 -rotate-12 rounded-full bg-cyan-100/70 blur-[1px]" /></>}
     <div className="absolute left-1/2 top-2 h-10 w-12 -translate-x-1/2 rounded-t-lg border-x border-t border-cyan-100/30 bg-slate-900/80" />
@@ -279,11 +279,12 @@ function EnergyPump({ excitement, inputting, pistonPosition, pumpCount, critical
     <div className="absolute left-1/2 top-[94px] h-[188px] w-[152px] -translate-x-1/2 overflow-hidden rounded-[2.4rem] border border-cyan-100/35 bg-slate-950/45 shadow-[inset_0_0_30px_rgba(34,211,238,.12)] sm:top-[104px] sm:h-[214px]">
       <div className="absolute inset-x-4 top-1/2 h-px -translate-y-1/2 bg-cyan-100/15" />
       <div className="absolute inset-y-4 left-1/2 w-px -translate-x-1/2 bg-cyan-100/10" />
+      <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t ${liquidTone} opacity-75 transition-[height] duration-150`} style={{ height: `${excitement}%` }} />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent)] opacity-50" />
       <div className="absolute inset-x-0 top-3 text-center font-mono text-[10px] font-bold tracking-[.2em] text-cyan-50/70">PUMP CORE</div>
-      <div className="absolute left-1/2 top-1/2 h-[58px] w-[136px] -translate-x-1/2 rounded-2xl border border-cyan-100/30 bg-[#0b2032]/95 shadow-lg will-change-transform" style={{ transform: `translateX(-50%) translateY(calc(-50% + ${travel}px))` }}>
-        <div className="absolute inset-x-4 top-1/2 h-1 -translate-y-1/2 rounded-full bg-cyan-100/30" />
-        <div className={`absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cyan-100 bg-cyan-300 transition-transform ${inputting ? "scale-125 shadow-[0_0_20px_rgba(103,232,249,.9)]" : ""}`} />
+      <div className="absolute left-1/2 top-1/2 z-20 h-[64px] w-[146px] rounded-2xl border-2 border-cyan-100/70 bg-cyan-200/20 shadow-[0_0_28px_rgba(103,232,249,.45)] will-change-transform" style={{ transform: `translate(-50%, -50%) translateY(${travel}px)` }}>
+        <div className="absolute inset-x-3 top-1/2 h-2 -translate-y-1/2 rounded-full bg-cyan-100/70" />
+        <div className={`absolute left-1/2 top-1/2 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cyan-50 bg-cyan-300 transition-transform ${inputting ? "scale-125 shadow-[0_0_20px_rgba(103,232,249,.9)]" : ""}`} />
       </div>
     </div>
     <div className="absolute bottom-10 left-1/2 h-3 w-56 -translate-x-1/2 overflow-hidden rounded-full border border-cyan-100/20 bg-white/8">
@@ -330,7 +331,7 @@ function RouteComponent() {
         <section className="relative flex min-h-[430px] flex-col items-center justify-center overflow-hidden rounded-[2rem] border border-white/10 bg-[#071321]/70 px-5 py-10 shadow-2xl shadow-cyan-950/30" aria-label="压力储能泵互动区域">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
           <div className="absolute top-6 flex items-center gap-3 text-xs font-medium tracking-wide"><span className={`size-2 rounded-full ${danger ? "animate-ping bg-red-400" : "bg-cyan-300"}`} /><span className={danger ? "text-red-200" : "text-slate-400"}>{status}</span></div>
-          <button type="button" aria-label="在压力储能泵上上拉复位并向下压送能量" onPointerDown={(event) => { const bounds = event.currentTarget.getBoundingClientRect(); const position = Math.max(0, Math.min(100, ((event.clientY - bounds.top) / bounds.height) * 100)); event.currentTarget.setPointerCapture(event.pointerId); game.startInput(event.clientY, position); }} onPointerMove={(event) => { const bounds = event.currentTarget.getBoundingClientRect(); const position = Math.max(0, Math.min(100, ((event.clientY - bounds.top) / bounds.height) * 100)); game.moveInput(event.clientY, position); }} onPointerUp={game.stopInput} onPointerCancel={game.stopInput} onPointerLeave={game.stopInput} className="relative grid h-[390px] w-full max-w-md touch-none place-items-center rounded-3xl outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/60">
+          <button type="button" aria-label="在压力储能泵上上拉复位并向下压送能量" onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); game.startInput(event.clientY, 50); }} onPointerMove={(event) => { const bounds = event.currentTarget.getBoundingClientRect(); const position = Math.max(0, Math.min(100, ((event.clientY - bounds.top) / bounds.height) * 100)); game.moveInput(event.clientY, position); }} onPointerUp={game.stopInput} onPointerCancel={game.stopInput} onPointerLeave={game.stopInput} className="relative grid h-[390px] w-full max-w-md touch-none place-items-center rounded-3xl outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/60">
             <div className={`absolute inset-x-12 bottom-8 top-12 rounded-[3rem] border border-cyan-200/10 bg-cyan-300/[.02] ${critical ? "animate-[pulse_1.2s_ease-in-out_infinite]" : ""}`} />
             <EnergyPump excitement={game.excitement} inputting={game.inputting} pistonPosition={game.pistonPosition} pumpCount={game.pumpCount} critical={critical} danger={danger} released={game.released} />
           </button>
