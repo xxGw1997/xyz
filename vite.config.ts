@@ -5,10 +5,12 @@ import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { visualizer } from "rollup-plugin-visualizer";
+import agents from 'agents/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    agents(),
     tailwindcss(),
     tanstackRouter({
       target: "react",

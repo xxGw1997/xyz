@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import genImageRoute from "./routes/gen-image";
 import { roomRoute } from "./routes/room";
 import { auth } from "./lib/auth";
+import chatAgentRoute from "./routes/chat";
 
 const app = new Hono<{
   Bindings: Env;
@@ -15,9 +16,11 @@ export const route = app
   })
   .route("/gen-image", genImageRoute)
   .route("/room", roomRoute)
+  .route("/chat", chatAgentRoute);
 
 export default app;
 
 export { GenerateStorageImageWorkflow } from "./workflows/generate-storage-image-workflow";
 export { Veet } from "./durable-objects/veet";
 export { ChatRoom } from "./durable-objects/chat-room";
+export { ChatAgent } from "./agents/chat-agent";
