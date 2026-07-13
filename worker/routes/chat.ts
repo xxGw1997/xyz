@@ -5,6 +5,7 @@ import { createDb } from "../lib/db";
 import { aiChat, aiChatMessage } from "../lib/db/schema";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import type { AuthVar } from "../types";
+import { getAgentByName } from "agents";
 
 export const chatAgentRoute = new Hono<{ Bindings: Env; Variables: AuthVar }>();
 
@@ -186,7 +187,8 @@ export const chatAgentType = chatAgentRoute
 
     if (body.title !== undefined) updateData.title = body.title;
     if (body.model !== undefined) updateData.model = body.model;
-    if (body.systemPrompt !== undefined) updateData.systemPrompt = body.systemPrompt;
+    if (body.systemPrompt !== undefined)
+      updateData.systemPrompt = body.systemPrompt;
     if (body.status !== undefined) updateData.status = body.status;
     if (body.visibility !== undefined) updateData.visibility = body.visibility;
 
@@ -227,4 +229,25 @@ export const chatAgentType = chatAgentRoute
       .where(eq(aiChat.id, chatId));
 
     return c.json({ success: true });
+  })
+  .post("/chats/:chatId/messages", async (c) => {
+    const chatId = c.req.param("chatId");
+    const userId = c.get("user").id;
+    const db = createDb();
+
+    const [isCurrentUserMessage] = await db
+      .select()
+      .from(aiChat)
+      .where(and(eq(aiChat.id, chatId), eq(aiChat.userId, userId)))
+      .limit(1);
+
+    if (!isCurrentUserMessage) return c.json({ error: "Forbidden" }, 403);
+
+    const agent = await getAgentByName(c.env.CHAT_AGENT, chatId, {
+      props: {
+        chatId,
+      },
+    });
+
+    return agent.fetch(c.req.raw);
   });
