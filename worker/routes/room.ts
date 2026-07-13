@@ -43,7 +43,7 @@ export const roomType = roomRoute
 
       if (!response.ok) {
         throw new Error(
-          `Cloudflare API 请求失败: ${response.status} ${response.statusText}`
+          `Cloudflare API 请求失败: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -69,7 +69,7 @@ export const roomType = roomRoute
         .select({ exists: sql`1` })
         .from(roomMember)
         .where(
-          and(eq(roomMember.userId, userId), eq(roomMember.roomId, roomId))
+          and(eq(roomMember.userId, userId), eq(roomMember.roomId, roomId)),
         )
         .limit(1);
       if (length === 0)
@@ -101,7 +101,7 @@ export const roomType = roomRoute
       });
 
       return stub.fetch(modifiedReq);
-    }
+    },
   )
   .post(
     "/create",
@@ -110,7 +110,7 @@ export const roomType = roomRoute
       z.object({
         roomName: z.string(),
         description: z.string(),
-      })
+      }),
     ),
     async (c) => {
       const db = createDb();
@@ -143,7 +143,7 @@ export const roomType = roomRoute
       } catch (error) {
         throw new HTTPException(500, { message: "Create Room failed!" });
       }
-    }
+    },
   )
   .get("/list", async (c) => {
     const userId = c.get("user").id;
@@ -162,7 +162,7 @@ export const roomType = roomRoute
           memberCount:
             sql<number>`(SELECT COUNT(*) FROM ${roomMember} WHERE ${eq(
               roomMember.roomId,
-              room.id
+              room.id,
             )})`.as("member_count"),
         })
         .from(roomMember)
@@ -204,7 +204,7 @@ export const roomType = roomRoute
         .select()
         .from(roomMember)
         .where(
-          and(eq(roomMember.roomId, roomId), eq(roomMember.userId, userId))
+          and(eq(roomMember.roomId, roomId), eq(roomMember.userId, userId)),
         )
         .limit(1);
 
@@ -234,7 +234,7 @@ export const roomType = roomRoute
       "query",
       z.object({
         roomId: z.string(),
-      })
+      }),
     ),
     async (c) => {
       const userId = c.get("user").id;
@@ -245,7 +245,7 @@ export const roomType = roomRoute
         .select({ exists: sql`1` })
         .from(roomMember)
         .where(
-          and(eq(roomMember.roomId, roomId), eq(roomMember.userId, userId))
+          and(eq(roomMember.roomId, roomId), eq(roomMember.userId, userId)),
         )
         .limit(1);
 
@@ -272,7 +272,7 @@ export const roomType = roomRoute
         message: "Get room members",
         members,
       });
-    }
+    },
   )
   .get(
     "/chat/:roomId/history",
@@ -281,7 +281,7 @@ export const roomType = roomRoute
       z.object({
         beforeCreatedAt: z.string().datetime().optional(),
         limit: z.string(),
-      })
+      }),
     ),
     async (c) => {
       const userId = c.get("user").id;
@@ -294,7 +294,7 @@ export const roomType = roomRoute
         .select({ exists: sql`1` })
         .from(roomMember)
         .where(
-          and(eq(roomMember.roomId, roomId), eq(roomMember.userId, userId))
+          and(eq(roomMember.roomId, roomId), eq(roomMember.userId, userId)),
         )
         .limit(1);
 
@@ -319,8 +319,8 @@ export const roomType = roomRoute
             eq(message.roomId, roomId),
             beforeCreatedAt
               ? lt(message.createdAt, new Date(beforeCreatedAt))
-              : undefined
-          )
+              : undefined,
+          ),
         )
         .orderBy(desc(message.createdAt))
         .limit(Number(limit))
@@ -330,5 +330,5 @@ export const roomType = roomRoute
         success: true,
         messages: messages.reverse(),
       });
-    }
+    },
   );

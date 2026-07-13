@@ -1,4 +1,5 @@
 import { relations, sql } from "drizzle-orm";
+import type { UIMessage } from "ai";
 import {
   sqliteTable,
   text,
@@ -252,3 +253,170 @@ export const messagesRelations = relations(message, ({ one }) => ({
     references: [message.id],
   }),
 }));
+
+
+
+/**
+ * -----------------------------------
+ *|        AI AGENT TABLES           |
+ * -----------------------------------
+ */
+
+/**
+ * AI CHAT
+ */
+export const aiChat = sqliteTable(
+  "ai_chat",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title"),
+    model: text("model").notNull(),
+    systemPrompt: text("system_prompt"),
+    status: text("status", {
+      enum: ["active", "archived", "deleted"],
+    })
+      .notNull()
+      .default("active"),
+    visibility: text("visibility", {
+      enum: ["private", "shared"],
+    })
+      .notNull()
+      .default("private"),
+    metadata: text("metadata", { mode: "json" }).$type<Record<string, unknown> | null>(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+    lastMessageAt: integer("last_message_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [
+    index("ai_chat_user_idx").on(t.userId),
+    index("ai_chat_user_status_updated_idx").on(t.userId, t.status, t.updatedAt),
+    index("ai_chat_last_message_idx").on(t.lastMessageAt),
+  ]
+);
+
+/**
+ * AI CHAT MESSAGE
+ */
+export const aiChatMessage = sqliteTable(
+  "ai_chat_message",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => aiChat.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    role: text("role")
+      .$type<UIMessage["role"]>()
+      .notNull(),
+    parts: text("parts", { mode: "json" })
+      .$type<UIMessage["parts"]>()
+      .notNull(),
+    metadata: text("metadata", { mode: "json" }).$type<UIMessage["metadata"] | null>(),
+    status: text("status", {
+      enum: ["submitted", "streaming", "ready", "error"],
+    })
+      .notNull()
+      .default("ready"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index("ai_chat_message_chat_created_idx").on(t.chatId, t.createdAt),
+    index("ai_chat_message_user_idx").on(t.userId),
+    index("ai_chat_message_role_idx").on(t.role),
+  ]
+);
+
+/**
+ * AI CHAT GENERATION
+ */
+export const aiChatGeneration = sqliteTable(
+  "ai_chat_generation",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => aiChat.id, { onDelete: "cascade" }),
+    userMessageId: text("user_message_id").references(() => aiChatMessage.id, {
+      onDelete: "set null",
+    }),
+    assistantMessageId: text("assistant_message_id").references(
+      () => aiChatMessage.id,
+      { onDelete: "set null" }
+    ),
+    model: text("model").notNull(),
+    status: text("status", {
+      enum: ["streaming", "completed", "failed", "cancelled"],
+    }).notNull(),
+    promptTokens: integer("prompt_tokens"),
+    completionTokens: integer("completion_tokens"),
+    totalTokens: integer("total_tokens"),
+    finishReason: text("finish_reason"),
+    errorMessage: text("error_message"),
+    startedAt: integer("started_at", { mode: "timestamp_ms" }),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index("ai_chat_generation_chat_idx").on(t.chatId),
+    index("ai_chat_generation_status_idx").on(t.status),
+    index("ai_chat_generation_user_message_idx").on(t.userMessageId),
+  ]
+);
+
+export const aiChatRelations = relations(aiChat, ({ one, many }) => ({
+  user: one(user, {
+    fields: [aiChat.userId],
+    references: [user.id],
+  }),
+  messages: many(aiChatMessage),
+  generations: many(aiChatGeneration),
+}));
+
+export const aiChatMessageRelations = relations(aiChatMessage, ({ one }) => ({
+  chat: one(aiChat, {
+    fields: [aiChatMessage.chatId],
+    references: [aiChat.id],
+  }),
+  user: one(user, {
+    fields: [aiChatMessage.userId],
+    references: [user.id],
+  }),
+}));
+
+export const aiChatGenerationRelations = relations(
+  aiChatGeneration,
+  ({ one }) => ({
+    chat: one(aiChat, {
+      fields: [aiChatGeneration.chatId],
+      references: [aiChat.id],
+    }),
+    userMessage: one(aiChatMessage, {
+      fields: [aiChatGeneration.userMessageId],
+      references: [aiChatMessage.id],
+    }),
+    assistantMessage: one(aiChatMessage, {
+      fields: [aiChatGeneration.assistantMessageId],
+      references: [aiChatMessage.id],
+    }),
+  })
+);

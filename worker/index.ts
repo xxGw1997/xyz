@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import genImageRoute from "./routes/gen-image";
 import { roomRoute } from "./routes/room";
 import { auth } from "./lib/auth";
-import chatAgentRoute from "./routes/chat";
+import { chatAgentRoute } from "./routes/chat";
 
 const app = new Hono<{
   Bindings: Env;
@@ -16,7 +16,7 @@ export const route = app
   })
   .route("/gen-image", genImageRoute)
   .route("/room", roomRoute)
-  .route("/chat", chatAgentRoute);
+  .route("/agent", chatAgentRoute);
 
 export default app;
 
