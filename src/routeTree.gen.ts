@@ -95,13 +95,13 @@ export interface FileRoutesByFullPath {
   '/real-good': typeof RealGoodRoute
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
-  '/draw': typeof DrawIndexRoute
-  '/hello': typeof HelloIndexRoute
-  '/p24': typeof P24IndexRoute
+  '/draw/': typeof DrawIndexRoute
+  '/hello/': typeof HelloIndexRoute
+  '/p24/': typeof P24IndexRoute
   '/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
-  '/agent': typeof authenticatedAgentIndexRoute
-  '/chat': typeof authenticatedChatIndexRoute
+  '/agent/': typeof authenticatedAgentIndexRoute
+  '/chat/': typeof authenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,13 +141,13 @@ export interface FileRouteTypes {
     | '/real-good'
     | '/dashboard'
     | '/hello/$roomId'
-    | '/draw'
-    | '/hello'
-    | '/p24'
+    | '/draw/'
+    | '/hello/'
+    | '/p24/'
     | '/agent/$chatId'
     | '/chat/$roomId'
-    | '/agent'
-    | '/chat'
+    | '/agent/'
+    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -223,21 +223,21 @@ declare module '@tanstack/react-router' {
     '/p24/': {
       id: '/p24/'
       path: '/p24'
-      fullPath: '/p24'
+      fullPath: '/p24/'
       preLoaderRoute: typeof P24IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hello/': {
       id: '/hello/'
       path: '/hello'
-      fullPath: '/hello'
+      fullPath: '/hello/'
       preLoaderRoute: typeof HelloIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/draw/': {
       id: '/draw/'
       path: '/draw'
-      fullPath: '/draw'
+      fullPath: '/draw/'
       preLoaderRoute: typeof DrawIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -258,14 +258,14 @@ declare module '@tanstack/react-router' {
     '/(authenticated)/chat/': {
       id: '/(authenticated)/chat/'
       path: '/chat'
-      fullPath: '/chat'
+      fullPath: '/chat/'
       preLoaderRoute: typeof authenticatedChatIndexRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
     '/(authenticated)/agent/': {
       id: '/(authenticated)/agent/'
       path: '/agent'
-      fullPath: '/agent'
+      fullPath: '/agent/'
       preLoaderRoute: typeof authenticatedAgentIndexRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
