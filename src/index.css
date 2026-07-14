@@ -155,3 +155,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .apple-scrollbar {
+    scrollbar-color: color-mix(in oklab, currentColor 18%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+
+  .apple-scrollbar::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .apple-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .apple-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, currentColor 16%, transparent);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+
+  .apple-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, currentColor 28%, transparent);
+    background-clip: content-box;
+  }
+}

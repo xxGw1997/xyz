@@ -4,7 +4,6 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   Bot,
   ChevronRight,
   CopyIcon,
@@ -289,9 +288,9 @@ function RouteComponent() {
   };
 
   return (
-    <main className="min-h-dvh overflow-hidden bg-[#f5f5f7] text-[#1d1d1f] dark:bg-[#050506] dark:text-[#f5f5f7]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_8%_8%,rgba(255,255,255,0.92),transparent_30%),radial-gradient(circle_at_92%_6%,rgba(173,216,230,0.38),transparent_34%),linear-gradient(135deg,rgba(245,245,247,0.96),rgba(229,231,235,0.72))] dark:bg-[radial-gradient(circle_at_8%_8%,rgba(255,255,255,0.10),transparent_30%),radial-gradient(circle_at_92%_6%,rgba(14,165,233,0.16),transparent_34%),linear-gradient(135deg,rgba(24,24,27,0.96),rgba(5,5,6,0.98))]" />
-      <div className="relative grid min-h-dvh md:grid-cols-[320px_1fr]">
+    <main className="h-dvh overflow-hidden bg-[#f5f5f7] text-[#1d1d1f] antialiased dark:bg-[#050506] dark:text-[#f5f5f7]">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.94),transparent_26%),radial-gradient(circle_at_86%_4%,rgba(202,232,255,0.46),transparent_32%),radial-gradient(circle_at_72%_92%,rgba(255,255,255,0.72),transparent_28%),linear-gradient(135deg,rgba(250,250,252,0.98),rgba(232,235,240,0.78))] dark:bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.11),transparent_26%),radial-gradient(circle_at_86%_4%,rgba(14,165,233,0.18),transparent_32%),radial-gradient(circle_at_72%_92%,rgba(255,255,255,0.07),transparent_28%),linear-gradient(135deg,rgba(24,24,27,0.98),rgba(5,5,6,0.98))]" />
+      <div className="relative grid h-dvh min-h-0 md:grid-cols-[320px_1fr]">
         {sidebarOpen && (
           <button
             type="button"
@@ -303,18 +302,11 @@ function RouteComponent() {
 
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-[min(320px,88vw)] border-r border-white/70 bg-white/78 p-4 shadow-2xl backdrop-blur-2xl transition-transform duration-300 dark:border-white/10 dark:bg-[#151517]/86 md:static md:z-auto md:w-auto md:translate-x-0 md:shadow-none",
+            "fixed inset-y-0 left-0 z-40 flex w-[min(320px,88vw)] flex-col border-r border-white/70 bg-white/72 p-4 shadow-2xl shadow-black/10 backdrop-blur-2xl transition-transform duration-300 dark:border-white/10 dark:bg-[#151517]/82 md:static md:z-auto md:h-dvh md:w-auto md:translate-x-0 md:shadow-none",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          <div className="flex items-center justify-between">
-            <Link
-              to="/agent"
-              className="inline-flex h-11 items-center gap-2 rounded-full px-2 text-sm font-semibold"
-            >
-              <ArrowLeft className="size-4" />
-              Agent Chat
-            </Link>
+          <div className="flex items-center justify-end">
             <Button
               type="button"
               size="icon"
@@ -326,7 +318,7 @@ function RouteComponent() {
             </Button>
           </div>
 
-          <div className="mt-6 rounded-[1.75rem] bg-[#f2f2f7]/80 p-4 dark:bg-white/8">
+          <div className="mt-6 rounded-[1.75rem] border border-white/70 bg-white/54 p-4 shadow-sm dark:border-white/8 dark:bg-white/8">
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-[#6e6e73] dark:text-[#a1a1aa]">
               Current
             </p>
@@ -338,7 +330,7 @@ function RouteComponent() {
             </p>
           </div>
 
-          <div className="mt-5 space-y-2">
+          <div className="apple-scrollbar mt-5 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             {chats.map((chat) => {
               const active = chat.id === chatId;
               return (
@@ -352,7 +344,7 @@ function RouteComponent() {
                     "group flex min-h-15 items-center gap-3 rounded-3xl px-3 py-3 transition duration-200",
                     active
                       ? "bg-[#1d1d1f] text-white shadow-lg shadow-black/15 dark:bg-white dark:text-black"
-                      : "hover:bg-white dark:hover:bg-white/10",
+                      : "text-[#3a3a3c] hover:bg-white/70 hover:shadow-sm dark:text-[#f5f5f7] dark:hover:bg-white/10",
                   )}
                 >
                   <span
@@ -387,8 +379,8 @@ function RouteComponent() {
           </div>
         </aside>
 
-        <section className="flex min-h-dvh flex-col p-3 md:p-5">
-          <header className="flex h-16 shrink-0 items-center justify-between rounded-[1.5rem] border border-white/70 bg-white/72 px-3 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-white/7 sm:px-5">
+        <section className="flex h-dvh min-h-0 flex-col p-3 md:p-5">
+          <header className="flex h-16 shrink-0 items-center justify-between rounded-[1.5rem] border border-white/70 bg-white/66 px-3 shadow-sm shadow-black/5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/7 sm:px-5">
             <div className="flex min-w-0 items-center gap-3">
               <Button
                 type="button"
@@ -416,10 +408,10 @@ function RouteComponent() {
             </div>
           </header>
 
-          <div className="mt-3 flex-1 overflow-hidden rounded-[2rem] border border-white/70 bg-white/58 shadow-[0_24px_90px_rgba(29,29,31,0.10)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/7">
-            <div className="flex h-full flex-col">
-              <Conversation>
-                <ConversationContent className="min-h-full px-4 py-6 sm:px-8">
+          <div className="mt-3 min-h-0 flex-1 overflow-hidden rounded-[2.25rem] border border-white/75 bg-white/50 shadow-[0_28px_100px_rgba(29,29,31,0.11)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/7">
+            <div className="flex h-full min-h-0 flex-col">
+              <Conversation className="apple-scrollbar min-h-0">
+                <ConversationContent className="min-h-full px-5 py-8 sm:px-10 lg:px-16">
                   {messagesQuery.isPending ? (
                     <div className="mx-auto w-full max-w-3xl space-y-4">
                       {Array.from({ length: 4 }).map((_, index) => (
@@ -445,20 +437,27 @@ function RouteComponent() {
                       </div>
                     </ConversationEmptyState>
                   ) : (
-                    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+                    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
                       {messages.map((message, messageIndex) => {
                         const isLastMessage = messageIndex === messages.length - 1;
                         const messageText = getMessageText(message);
 
                         return (
                           <Fragment key={message.id}>
-                            <Message from={message.role}>
+                            <Message
+                              from={message.role}
+                              className={cn(
+                                message.role === "user"
+                                  ? "ml-auto max-w-[78%] sm:max-w-[68%]"
+                                  : "mr-auto max-w-[84%] sm:max-w-[72%]",
+                              )}
+                            >
                               <MessageContent
                                 className={cn(
-                                  "rounded-[1.5rem] px-5 py-4 text-sm leading-7 shadow-sm sm:text-base",
+                                  "text-sm leading-7 sm:text-base",
                                   message.role === "user"
-                                    ? "bg-[#007aff] text-white"
-                                    : "bg-white/90 text-[#1d1d1f] dark:bg-[#2c2c2e] dark:text-[#f5f5f7]",
+                                    ? "rounded-[1.65rem] rounded-br-md bg-[#007aff] px-5 py-4 text-white shadow-sm shadow-blue-500/20 sm:px-6 sm:py-5"
+                                    : "bg-transparent px-0 py-1 text-[#1d1d1f] shadow-none dark:text-[#f5f5f7]",
                                 )}
                               >
                                 <MessageParts
@@ -469,7 +468,7 @@ function RouteComponent() {
                               </MessageContent>
                             </Message>
                             {message.role === "assistant" && isLastMessage && (
-                              <MessageActions className="pl-1">
+                              <MessageActions className="pl-2">
                                 <MessageAction
                                   onClick={() => regenerate()}
                                   tooltip="重新生成"
@@ -498,7 +497,7 @@ function RouteComponent() {
               </Conversation>
 
               {error && (
-                <div className="mx-auto mb-3 flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                <div className="mx-auto mb-3 flex w-[calc(100%-2rem)] max-w-5xl items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
                   <span>{error.message}</span>
                   <Button
                     type="button"
@@ -513,7 +512,7 @@ function RouteComponent() {
 
               <PromptInput
                 onSubmit={handleSubmit}
-                className="mx-auto flex max-w-3xl items-end gap-3 rounded-md border border-black/5 bg-white/88 p-3 shadow-[0_18px_50px_rgba(29,29,31,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1c1c1e]/90"
+                className="mx-auto mb-4 flex w-[calc(100%-2rem)] max-w-5xl items-end gap-3 rounded-[1.35rem] border border-black/5 bg-white/88 p-3 shadow-[0_18px_50px_rgba(29,29,31,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1c1c1e]/90"
               >
                 <PromptInputTextarea
                   value={input}
