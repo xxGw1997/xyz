@@ -5,6 +5,9 @@ onlyBuiltDependencies:
   - core-js-pure
 allowBuilds:
   core-js-pure: true
+  esbuild: true
+  sharp: true
+  workerd: true
 minimumReleaseAgeStrict: false
 minimumReleaseAgeExclude:
   - '@ai-sdk/gateway@4.0.19'
