@@ -9,18 +9,55 @@ import {
   toUIMessageStream,
   type UIMessage,
 } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { createDb } from "../lib/db";
 import { SYSTEM_PROMPT } from "./prompts";
 import { aiChat, aiChatMessage } from "../lib/db/schema";
 
-export class ChatAgent extends Agent<Env> {
+type ChatAgentProps = {
+  chatId?: string;
+  userId?: string;
+};
+
+type ChatAgentRequestBody = {
+  message?: string;
+  chatId?: string;
+  userId?: string;
+};
+
+export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
   private chatId: string = "";
-  async onStart(props: { chatId: string }) {
-    this.chatId = props.chatId;
+  private userId: string = "";
+
+  async onStart(props?: ChatAgentProps) {
+    this.setChatContext(props);
   }
+
+  private setChatContext(props?: ChatAgentProps) {
+    if (props?.chatId) this.chatId = props.chatId;
+    if (props?.userId) this.userId = props.userId;
+  }
+
   async onRequest(request: Request): Promise<Response> {
-    const body = await request.json<{ message: string; userId: string }>();
-    return this.handleMessages(body.message, body.userId);
+    const body = await request.json<ChatAgentRequestBody>();
+    this.setChatContext(body);
+
+    if (!body.message?.trim()) {
+      return Response.json({ error: "Message is required" }, { status: 400 });
+    }
+
+    if (!this.chatId || !this.userId) {
+      console.error("ChatAgent missing context", {
+        chatId: this.chatId,
+        userId: this.userId,
+      });
+      return Response.json(
+        { error: "Chat context is missing" },
+        { status: 400 },
+      );
+    }
+
+    return this.handleMessages(body.message, this.userId);
   }
   private async handleMessages(
     userInput: string,
@@ -33,10 +70,17 @@ export class ChatAgent extends Agent<Env> {
       parts: [{ type: "text", text: userInput }],
     };
 
+    await this.appendMessages(this.chatId, userId, [userMessage]);
+
     const originalMessages = [...history, userMessage];
 
+    const provider = createOpenAI({
+      apiKey: this.env.AI_API_KEY,
+      baseURL: this.env.AI_BASE_URL,
+    });
+    const llmModel = provider(this.env.AI_MODEL);
     const result = streamText({
-      model: "alibaba/qwen-3-14b",
+      model: llmModel,
       instructions: SYSTEM_PROMPT,
       messages: await convertToModelMessages(originalMessages),
       // tools:
@@ -52,10 +96,12 @@ export class ChatAgent extends Agent<Env> {
           size: 16,
         }),
         onEnd: async ({ messages }) => {
-          await this.replaceMessages(
+          await this.appendMessages(
             this.chatId,
             userId,
-            messages as UIMessage[],
+            (messages as UIMessage[]).filter(
+              (message) => message.role === "assistant",
+            ),
           );
         },
       }),
@@ -94,37 +140,49 @@ export class ChatAgent extends Agent<Env> {
     });
   }
 
-  private async replaceMessages(
+  private async appendMessages(
     chatId: string,
     userId: string,
     messages: UIMessage[],
   ) {
+    if (!chatId || !userId) {
+      console.error("Skip saving AI chat messages: missing context", {
+        chatId,
+        userId,
+      });
+      return;
+    }
+
     const db = createDb();
-    const now = new Date();
+    const now = Date.now();
 
-    await db.transaction(async (tx) => {
-      await tx.delete(aiChatMessage).where(eq(aiChatMessage.chatId, chatId));
-
+    try {
       if (messages.length) {
-        await tx.insert(aiChatMessage).values(
-          messages.map((msg) => ({
-            id: msg.id,
-            chatId,
-            userId,
-            role: msg.role,
-            parts: msg.parts,
-            metadata: msg.metadata ?? null,
-            status: "ready" as const,
-            createdAt: now,
-            updatedAt: now,
-          })),
-        );
+        await db
+          .insert(aiChatMessage)
+          .values(
+            messages.map((msg, index) => ({
+              id: msg.id,
+              chatId,
+              userId,
+              role: msg.role,
+              parts: msg.parts,
+              metadata: msg.metadata ?? null,
+              status: "ready" as const,
+              createdAt: new Date(now + index),
+              updatedAt: new Date(now + index),
+            })),
+          )
+          .onConflictDoNothing({ target: aiChatMessage.id });
       }
 
-      await tx
+      await db
         .update(aiChat)
-        .set({ updatedAt: now, lastMessageAt: now })
+        .set({ updatedAt: new Date(now), lastMessageAt: new Date(now) })
         .where(eq(aiChat.id, chatId));
-    });
+    } catch (error) {
+      console.error("Failed to save AI chat messages", error);
+      throw error;
+    }
   }
 }

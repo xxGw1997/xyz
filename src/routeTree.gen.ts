@@ -15,12 +15,13 @@ import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as P24IndexRouteImport } from './routes/p24/index'
 import { Route as HelloIndexRouteImport } from './routes/hello/index'
-import { Route as FuckIndexRouteImport } from './routes/fuck/index'
 import { Route as DrawIndexRouteImport } from './routes/draw/index'
 import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
 import { Route as authenticatedDashboardRouteImport } from './routes/(authenticated)/dashboard'
 import { Route as authenticatedChatIndexRouteImport } from './routes/(authenticated)/chat/index'
+import { Route as authenticatedAgentIndexRouteImport } from './routes/(authenticated)/agent/index'
 import { Route as authenticatedChatRoomIdRouteImport } from './routes/(authenticated)/chat/$roomId'
+import { Route as authenticatedAgentChatIdRouteImport } from './routes/(authenticated)/agent/$chatId'
 
 const RealGoodRoute = RealGoodRouteImport.update({
   id: '/real-good',
@@ -51,11 +52,6 @@ const HelloIndexRoute = HelloIndexRouteImport.update({
   path: '/hello/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FuckIndexRoute = FuckIndexRouteImport.update({
-  id: '/fuck/',
-  path: '/fuck/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DrawIndexRoute = DrawIndexRouteImport.update({
   id: '/draw/',
   path: '/draw/',
@@ -76,11 +72,22 @@ const authenticatedChatIndexRoute = authenticatedChatIndexRouteImport.update({
   path: '/chat/',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedAgentIndexRoute = authenticatedAgentIndexRouteImport.update({
+  id: '/agent/',
+  path: '/agent/',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
 const authenticatedChatRoomIdRoute = authenticatedChatRoomIdRouteImport.update({
   id: '/chat/$roomId',
   path: '/chat/$roomId',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedAgentChatIdRoute =
+  authenticatedAgentChatIdRouteImport.update({
+    id: '/agent/$chatId',
+    path: '/agent/$chatId',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,10 +96,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/draw': typeof DrawIndexRoute
-  '/fuck': typeof FuckIndexRoute
   '/hello': typeof HelloIndexRoute
   '/p24': typeof P24IndexRoute
+  '/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/agent': typeof authenticatedAgentIndexRoute
   '/chat': typeof authenticatedChatIndexRoute
 }
 export interface FileRoutesByTo {
@@ -102,10 +110,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/draw': typeof DrawIndexRoute
-  '/fuck': typeof FuckIndexRoute
   '/hello': typeof HelloIndexRoute
   '/p24': typeof P24IndexRoute
+  '/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/agent': typeof authenticatedAgentIndexRoute
   '/chat': typeof authenticatedChatIndexRoute
 }
 export interface FileRoutesById {
@@ -117,10 +126,11 @@ export interface FileRoutesById {
   '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
   '/hello/$roomId': typeof HelloRoomIdRoute
   '/draw/': typeof DrawIndexRoute
-  '/fuck/': typeof FuckIndexRoute
   '/hello/': typeof HelloIndexRoute
   '/p24/': typeof P24IndexRoute
+  '/(authenticated)/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/(authenticated)/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/(authenticated)/agent/': typeof authenticatedAgentIndexRoute
   '/(authenticated)/chat/': typeof authenticatedChatIndexRoute
 }
 export interface FileRouteTypes {
@@ -132,10 +142,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/hello/$roomId'
     | '/draw'
-    | '/fuck'
     | '/hello'
     | '/p24'
+    | '/agent/$chatId'
     | '/chat/$roomId'
+    | '/agent'
     | '/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -145,10 +156,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/hello/$roomId'
     | '/draw'
-    | '/fuck'
     | '/hello'
     | '/p24'
+    | '/agent/$chatId'
     | '/chat/$roomId'
+    | '/agent'
     | '/chat'
   id:
     | '__root__'
@@ -159,10 +171,11 @@ export interface FileRouteTypes {
     | '/(authenticated)/dashboard'
     | '/hello/$roomId'
     | '/draw/'
-    | '/fuck/'
     | '/hello/'
     | '/p24/'
+    | '/(authenticated)/agent/$chatId'
     | '/(authenticated)/chat/$roomId'
+    | '/(authenticated)/agent/'
     | '/(authenticated)/chat/'
   fileRoutesById: FileRoutesById
 }
@@ -173,7 +186,6 @@ export interface RootRouteChildren {
   RealGoodRoute: typeof RealGoodRoute
   HelloRoomIdRoute: typeof HelloRoomIdRoute
   DrawIndexRoute: typeof DrawIndexRoute
-  FuckIndexRoute: typeof FuckIndexRoute
   HelloIndexRoute: typeof HelloIndexRoute
   P24IndexRoute: typeof P24IndexRoute
 }
@@ -222,13 +234,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelloIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fuck/': {
-      id: '/fuck/'
-      path: '/fuck'
-      fullPath: '/fuck'
-      preLoaderRoute: typeof FuckIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/draw/': {
       id: '/draw/'
       path: '/draw'
@@ -257,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedChatIndexRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/agent/': {
+      id: '/(authenticated)/agent/'
+      path: '/agent'
+      fullPath: '/agent'
+      preLoaderRoute: typeof authenticatedAgentIndexRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/chat/$roomId': {
       id: '/(authenticated)/chat/$roomId'
       path: '/chat/$roomId'
@@ -264,18 +276,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedChatRoomIdRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/agent/$chatId': {
+      id: '/(authenticated)/agent/$chatId'
+      path: '/agent/$chatId'
+      fullPath: '/agent/$chatId'
+      preLoaderRoute: typeof authenticatedAgentChatIdRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
+  authenticatedAgentChatIdRoute: typeof authenticatedAgentChatIdRoute
   authenticatedChatRoomIdRoute: typeof authenticatedChatRoomIdRoute
+  authenticatedAgentIndexRoute: typeof authenticatedAgentIndexRoute
   authenticatedChatIndexRoute: typeof authenticatedChatIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRoute: authenticatedDashboardRoute,
+  authenticatedAgentChatIdRoute: authenticatedAgentChatIdRoute,
   authenticatedChatRoomIdRoute: authenticatedChatRoomIdRoute,
+  authenticatedAgentIndexRoute: authenticatedAgentIndexRoute,
   authenticatedChatIndexRoute: authenticatedChatIndexRoute,
 }
 
@@ -289,7 +312,6 @@ const rootRouteChildren: RootRouteChildren = {
   RealGoodRoute: RealGoodRoute,
   HelloRoomIdRoute: HelloRoomIdRoute,
   DrawIndexRoute: DrawIndexRoute,
-  FuckIndexRoute: FuckIndexRoute,
   HelloIndexRoute: HelloIndexRoute,
   P24IndexRoute: P24IndexRoute,
 }

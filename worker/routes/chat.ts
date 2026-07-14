@@ -11,47 +11,6 @@ export const chatAgentRoute = new Hono<{ Bindings: Env; Variables: AuthVar }>();
 
 chatAgentRoute.use(authMiddleware);
 
-/**
-AI Chat API
-- POST /api/ai/chats
-  - 创建一个新的 AI 会话
-  - 写入 aiChat
-  - 绑定当前 user.id
-  - 返回 chatId
-- GET /api/ai/chats
-  - 获取当前用户的会话列表
-  - 查询 aiChat
-  - 按 lastMessageAt 或 updatedAt 倒序
-  - 用于侧边栏历史会话
-- GET /api/ai/chats/:chatId
-  - 获取单个会话元信息
-  - 校验当前用户是否拥有该会话
-  - 返回 title、model、status、systemPrompt 等
-- GET /api/ai/chats/:chatId/messages
-  - 获取该会话的历史消息
-  - 校验权限
-  - 查询 aiChatMessage
-  - 转换为 UIMessage[] 返回给前端恢复聊天
-- POST /api/ai/chats/:chatId/messages
-  - 发送用户消息并流式返回 assistant 回复
-  - 校验权限
-  - 获取对应 Agent / Durable Object
-  - 把请求转发给 Agent
-  - Agent 内部调用 streamText()
-  - 直接返回 result.toUIMessageStreamResponse()
-  - onFinish 后保存最终 UIMessage[]
-- PATCH /api/ai/chats/:chatId
-  - 更新会话配置
-  - 比如 title、model、systemPrompt、status
-  - 校验权限
-  - 更新 aiChat
-- DELETE /api/ai/chats/:chatId
-  - 删除或软删除会话
-  - 推荐第一版做软删除：status = "deleted"
-  - 校验权限 
-
- */
-
 export const chatAgentType = chatAgentRoute
   .post("/chats", async (c) => {
     const db = createDb();
@@ -246,8 +205,24 @@ export const chatAgentType = chatAgentRoute
     const agent = await getAgentByName(c.env.CHAT_AGENT, chatId, {
       props: {
         chatId,
+        userId,
       },
     });
 
-    return agent.fetch(c.req.raw);
+    const body = await c.req.json<{ message?: string }>();
+    const headers = new Headers(c.req.raw.headers);
+    headers.set("content-type", "application/json");
+    headers.delete("content-length");
+
+    return agent.fetch(
+      new Request(c.req.raw.url, {
+        method: c.req.raw.method,
+        body: JSON.stringify({
+          ...body,
+          chatId,
+          userId,
+        }),
+        headers,
+      }),
+    );
   });

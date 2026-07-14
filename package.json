@@ -17,6 +17,8 @@
     "db:s": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.13",
+    "@ai-sdk/react": "^4.0.27",
     "@excalidraw/excalidraw": "^0.18.0",
     "@hono/zod-validator": "^0.7.6",
     "@radix-ui/react-avatar": "^1.1.11",
