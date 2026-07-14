@@ -9,6 +9,7 @@ import { routeTree } from "./routeTree.gen";
 import { AuthProvider, useAuth } from "./components/providers/auth-provider";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/providers/theme-provider";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 const queryClient = new QueryClient();
 
@@ -45,9 +46,11 @@ function InnerApp() {
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <InnerApp />
-      </AuthProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <InnerApp />
+        </AuthProvider>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }
@@ -59,6 +62,6 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <App />
-    </StrictMode>
+    </StrictMode>,
   );
 }

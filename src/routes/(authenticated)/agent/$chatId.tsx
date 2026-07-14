@@ -1,24 +1,45 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  ArrowUp,
   Bot,
   ChevronRight,
+  CopyIcon,
   MessageCircle,
   PanelLeft,
   Plus,
+  RefreshCcwIcon,
   Sparkles,
-  StopCircle,
-  UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  type PromptInputMessage,
+  PromptInputSubmit,
+  PromptInputTextarea,
+} from "@/components/ai-elements/prompt-input";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/(authenticated)/agent/$chatId")({
@@ -72,7 +93,9 @@ async function fetchChats(): Promise<ChatSummary[]> {
   return data.chats;
 }
 
-async function fetchChatDetail(chatId: string): Promise<ChatDetail | undefined> {
+async function fetchChatDetail(
+  chatId: string,
+): Promise<ChatDetail | undefined> {
   const response = await fetch(`${agentApiBase}/chats/${chatId}`);
 
   if (!response.ok) throw new Error("获取对话详情失败");
@@ -101,9 +124,50 @@ async function createChat(): Promise<string> {
 
 function getMessageText(message: UIMessage): string {
   return message.parts
-    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .filter(
+      (part): part is { type: "text"; text: string } => part.type === "text",
+    )
     .map((part) => part.text)
     .join("");
+}
+
+function MessageParts({
+  isLastMessage,
+  isStreaming,
+  message,
+}: {
+  isLastMessage: boolean;
+  isStreaming: boolean;
+  message: UIMessage;
+}) {
+  const reasoningParts = message.parts.filter(
+    (part): part is { type: "reasoning"; text: string } =>
+      part.type === "reasoning",
+  );
+  const reasoningText = reasoningParts.map((part) => part.text).join("\n\n");
+  const lastPart = message.parts.at(-1);
+  const isReasoningStreaming =
+    isLastMessage && isStreaming && lastPart?.type === "reasoning";
+
+  return (
+    <>
+      {reasoningParts.length > 0 && (
+        <Reasoning className="w-full" isStreaming={isReasoningStreaming}>
+          <ReasoningTrigger />
+          <ReasoningContent>{reasoningText}</ReasoningContent>
+        </Reasoning>
+      )}
+      {message.parts.map((part, partIndex) => {
+        if (part.type !== "text") return null;
+
+        return (
+          <MessageResponse key={`${message.id}-${partIndex}`}>
+            {part.text}
+          </MessageResponse>
+        );
+      })}
+    </>
+  );
 }
 
 function RouteComponent() {
@@ -139,6 +203,7 @@ function RouteComponent() {
     messages,
     setMessages,
     sendMessage,
+    regenerate,
     stop,
     status,
     error,
@@ -162,7 +227,9 @@ function RouteComponent() {
     }),
     onFinish: () => {
       queryClient.invalidateQueries({ queryKey: ["agent-chats"] });
-      queryClient.invalidateQueries({ queryKey: ["agent-chat-messages", chatId] });
+      queryClient.invalidateQueries({
+        queryKey: ["agent-chat-messages", chatId],
+      });
     },
     onError: (chatError) => toast.error(chatError.message),
   });
@@ -193,12 +260,12 @@ function RouteComponent() {
 
   const isNewChat = !messagesQuery.isPending && messages.length === 0 && !q;
   const isBusy = status === "submitted" || status === "streaming";
+  const isStreaming = status === "streaming";
   const chats = chatsQuery.data ?? [];
   const currentTitle = chatDetailQuery.data?.title || "New Chat";
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const value = input.trim();
+  const handleSubmit = (message: PromptInputMessage) => {
+    const value = message.text.trim();
     if (!value || isBusy) return;
 
     sendMessage({ text: value });
@@ -305,7 +372,9 @@ function RouteComponent() {
                     <span
                       className={cn(
                         "mt-0.5 block truncate text-xs",
-                        active ? "text-white/70 dark:text-black/55" : "text-[#86868b]",
+                        active
+                          ? "text-white/70 dark:text-black/55"
+                          : "text-[#86868b]",
                       )}
                     >
                       {active ? "正在查看" : "打开历史记录"}
@@ -349,114 +418,117 @@ function RouteComponent() {
 
           <div className="mt-3 flex-1 overflow-hidden rounded-[2rem] border border-white/70 bg-white/58 shadow-[0_24px_90px_rgba(29,29,31,0.10)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/7">
             <div className="flex h-full flex-col">
-              <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-                {messagesQuery.isPending ? (
-                  <div className="mx-auto max-w-3xl space-y-4">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="h-20 animate-pulse rounded-[1.5rem] bg-black/5 dark:bg-white/10"
-                      />
-                    ))}
-                  </div>
-                ) : isNewChat ? (
-                  <div className="flex min-h-full items-center justify-center text-center">
-                    <div className="max-w-2xl">
-                      <div className="mx-auto grid size-20 place-items-center rounded-[1.75rem] bg-[#1d1d1f] text-white shadow-2xl shadow-black/20 dark:bg-white dark:text-black">
-                        <Bot className="size-9" />
-                      </div>
-                      <h2 className="mt-8 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-                        开始一段新对话
-                      </h2>
-                      <p className="mt-4 text-base leading-7 text-[#6e6e73] dark:text-[#a1a1aa]">
-                        这是一个新的 Agent Chat。发送第一条消息后，它会变成可继续追问的历史对话。
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mx-auto flex max-w-3xl flex-col gap-5">
-                    {messages.map((message) => {
-                      const isUser = message.role === "user";
-                      const text = getMessageText(message);
-
-                      return (
+              <Conversation>
+                <ConversationContent className="min-h-full px-4 py-6 sm:px-8">
+                  {messagesQuery.isPending ? (
+                    <div className="mx-auto w-full max-w-3xl space-y-4">
+                      {Array.from({ length: 4 }).map((_, index) => (
                         <div
-                          key={message.id}
-                          className={cn(
-                            "flex gap-3",
-                            isUser ? "justify-end" : "justify-start",
-                          )}
-                        >
-                          {!isUser && (
-                            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-[#1d1d1f] text-white dark:bg-white dark:text-black">
-                              <Bot className="size-4" />
-                            </div>
-                          )}
-                          <Card
-                            className={cn(
-                              "max-w-[82%] rounded-[1.5rem] border-0 px-5 py-4 text-sm leading-7 shadow-sm sm:text-base",
-                              isUser
-                                ? "bg-[#007aff] text-white"
-                                : "bg-white/90 text-[#1d1d1f] dark:bg-[#2c2c2e] dark:text-[#f5f5f7]",
-                            )}
-                          >
-                            <p className="whitespace-pre-wrap">{text}</p>
-                          </Card>
-                          {isUser && (
-                            <div className="grid size-9 shrink-0 place-items-center rounded-full bg-[#e5e5ea] text-[#1d1d1f] dark:bg-white/12 dark:text-white">
-                              <UserRound className="size-4" />
-                            </div>
-                          )}
+                          key={index}
+                          className="h-20 animate-pulse rounded-[1.5rem] bg-black/5 dark:bg-white/10"
+                        />
+                      ))}
+                    </div>
+                  ) : isNewChat ? (
+                    <ConversationEmptyState className="min-h-[calc(100dvh-15rem)]">
+                      <div className="max-w-2xl text-center">
+                        <div className="mx-auto grid size-20 place-items-center rounded-[1.75rem] bg-[#1d1d1f] text-white shadow-2xl shadow-black/20 dark:bg-white dark:text-black">
+                          <Bot className="size-9" />
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                        <h2 className="mt-8 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+                          开始一段新对话
+                        </h2>
+                        <p className="mt-4 text-base leading-7 text-[#6e6e73] dark:text-[#a1a1aa]">
+                          这是一个新的 Agent
+                          Chat。发送第一条消息后，它会变成可继续追问的历史对话。
+                        </p>
+                      </div>
+                    </ConversationEmptyState>
+                  ) : (
+                    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+                      {messages.map((message, messageIndex) => {
+                        const isLastMessage = messageIndex === messages.length - 1;
+                        const messageText = getMessageText(message);
+
+                        return (
+                          <Fragment key={message.id}>
+                            <Message from={message.role}>
+                              <MessageContent
+                                className={cn(
+                                  "rounded-[1.5rem] px-5 py-4 text-sm leading-7 shadow-sm sm:text-base",
+                                  message.role === "user"
+                                    ? "bg-[#007aff] text-white"
+                                    : "bg-white/90 text-[#1d1d1f] dark:bg-[#2c2c2e] dark:text-[#f5f5f7]",
+                                )}
+                              >
+                                <MessageParts
+                                  isLastMessage={isLastMessage}
+                                  isStreaming={isStreaming}
+                                  message={message}
+                                />
+                              </MessageContent>
+                            </Message>
+                            {message.role === "assistant" && isLastMessage && (
+                              <MessageActions className="pl-1">
+                                <MessageAction
+                                  onClick={() => regenerate()}
+                                  tooltip="重新生成"
+                                  label="重新生成"
+                                >
+                                  <RefreshCcwIcon className="size-3" />
+                                </MessageAction>
+                                <MessageAction
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(messageText)
+                                  }
+                                  tooltip="复制"
+                                  label="复制"
+                                >
+                                  <CopyIcon className="size-3" />
+                                </MessageAction>
+                              </MessageActions>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ConversationContent>
+                <ConversationScrollButton />
+              </Conversation>
 
               {error && (
                 <div className="mx-auto mb-3 flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
                   <span>{error.message}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={clearError}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearError}
+                  >
                     关闭
                   </Button>
                 </div>
               )}
 
-              <div className="shrink-0 p-3 sm:p-5">
-                <form
-                  onSubmit={handleSubmit}
-                  className="mx-auto flex max-w-3xl items-end gap-3 rounded-[1.75rem] border border-black/5 bg-white/88 p-3 shadow-[0_18px_50px_rgba(29,29,31,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1c1c1e]/90"
-                >
-                  <Textarea
-                    value={input}
-                    onChange={(event) => setInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
-                        event.preventDefault();
-                        const value = input.trim();
-                        if (value && !isBusy) {
-                          sendMessage({ text: value });
-                          setInput("");
-                        }
-                      }
-                    }}
-                    placeholder={isNewChat ? "发送第一条消息..." : "继续追问..."}
-                    className="max-h-40 min-h-12 resize-none border-0 bg-transparent px-3 py-3 text-base shadow-none focus-visible:ring-0"
-                    aria-label="输入 Agent Chat 消息"
-                  />
-                  <Button
-                    type={isBusy ? "button" : "submit"}
-                    size="icon"
-                    onClick={isBusy ? () => void stop() : undefined}
-                    disabled={!isBusy && !input.trim()}
-                    className="size-12 shrink-0 rounded-full bg-[#007aff] text-white shadow-lg shadow-blue-500/25 hover:bg-[#006ee6] disabled:bg-[#d1d1d6] dark:disabled:bg-white/20"
-                    aria-label={isBusy ? "停止生成" : "发送消息"}
-                  >
-                    {isBusy ? <StopCircle className="size-5" /> : <ArrowUp className="size-5" />}
-                  </Button>
-                </form>
-              </div>
+              <PromptInput
+                onSubmit={handleSubmit}
+                className="mx-auto flex max-w-3xl items-end gap-3 rounded-md border border-black/5 bg-white/88 p-3 shadow-[0_18px_50px_rgba(29,29,31,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1c1c1e]/90"
+              >
+                <PromptInputTextarea
+                  value={input}
+                  onChange={(event) => setInput(event.currentTarget.value)}
+                  placeholder={isNewChat ? "发送第一条消息..." : "继续追问..."}
+                  className="max-h-40 min-h-12 resize-none border-0 bg-transparent px-3 py-3 text-base shadow-none focus-visible:ring-0"
+                  aria-label="输入 Agent Chat 消息"
+                />
+                <PromptInputSubmit
+                  status={status}
+                  onStop={stop}
+                  disabled={!isBusy && !input.trim()}
+                  className="size-12 shrink-0 rounded-md bg-[#007aff] text-white shadow-lg shadow-blue-500/25 hover:bg-[#006ee6] disabled:bg-[#d1d1d6] dark:disabled:bg-white/20"
+                />
+              </PromptInput>
             </div>
           </div>
         </section>
