@@ -1,8 +1,9 @@
-import type { UIMessage } from "ai";
+import type { AgentMessage } from "./types";
 
 const DEFAULT_MODEL_CONTEXT_TOKEN_BUDGET = 24_000;
+type AgentMessagePart = AgentMessage["parts"][number];
 
-function isActiveToolPart(part: UIMessage["parts"][number]): boolean {
+function isActiveToolPart(part: AgentMessagePart): boolean {
   const state = (part as Record<string, unknown>).state;
 
   return (
@@ -13,7 +14,7 @@ function isActiveToolPart(part: UIMessage["parts"][number]): boolean {
   );
 }
 
-function projectMessageForModel(message: UIMessage): UIMessage {
+function projectMessageForModel(message: AgentMessage): AgentMessage {
   const parts = message.parts.filter((part) => {
     return part.type !== "reasoning" && part.type !== "reasoning-file";
   });
@@ -21,7 +22,7 @@ function projectMessageForModel(message: UIMessage): UIMessage {
   return { ...message, parts };
 }
 
-function getActiveToolChainStart(messages: UIMessage[]): number {
+function getActiveToolChainStart(messages: AgentMessage[]): number {
   const activeToolMessageIndex = messages.findIndex((message) =>
     message.parts.some((part) => isActiveToolPart(part)),
   );
@@ -39,7 +40,7 @@ function getActiveToolChainStart(messages: UIMessage[]): number {
   return activeToolMessageIndex;
 }
 
-function estimateMessageTokens(message: UIMessage): number {
+function estimateMessageTokens(message: AgentMessage): number {
   const serialized = JSON.stringify({
     role: message.role,
     parts: message.parts,
@@ -59,14 +60,14 @@ function estimateMessageTokens(message: UIMessage): number {
 }
 
 export function prepareModelContext(
-  messages: UIMessage[],
+  messages: AgentMessage[],
   tokenBudget = DEFAULT_MODEL_CONTEXT_TOKEN_BUDGET,
-): UIMessage[] {
+): AgentMessage[] {
   const projectedMessages = messages
     .map(projectMessageForModel)
     .filter((message) => message.parts.length > 0);
   const activeChainStart = getActiveToolChainStart(projectedMessages);
-  const selectedMessages: UIMessage[] = [];
+  const selectedMessages: AgentMessage[] = [];
   let usedTokens = 0;
 
   for (let index = projectedMessages.length - 1; index >= 0; index -= 1) {
@@ -99,10 +100,10 @@ export function prepareModelContext(
 }
 
 export function mergeApprovalStates(
-  messagesFromDb: UIMessage[],
-  submittedMessages: UIMessage[],
-): UIMessage[] {
-  const approvalStates = new Map<string, UIMessage["parts"][number]>();
+  messagesFromDb: AgentMessage[],
+  submittedMessages: AgentMessage[],
+): AgentMessage[] {
+  const approvalStates = new Map<string, AgentMessagePart>();
 
   for (const message of submittedMessages) {
     for (const part of message.parts) {
@@ -130,5 +131,5 @@ export function mergeApprovalStates(
 
       return approvalState ? { ...part, ...approvalState } : part;
     }),
-  })) as UIMessage[];
+  })) as AgentMessage[];
 }

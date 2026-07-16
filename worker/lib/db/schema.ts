@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import type { UIMessage } from "ai";
+import type { AgentMessage } from "../../agents/types";
 import {
   sqliteTable,
   text,
@@ -314,12 +314,12 @@ export const aiChatMessage = sqliteTable(
       .references(() => aiChat.id, { onDelete: "cascade" }),
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     role: text("role")
-      .$type<UIMessage["role"]>()
+      .$type<AgentMessage["role"]>()
       .notNull(),
     parts: text("parts", { mode: "json" })
-      .$type<UIMessage["parts"]>()
+      .$type<AgentMessage["parts"]>()
       .notNull(),
-    metadata: text("metadata", { mode: "json" }).$type<UIMessage["metadata"] | null>(),
+    metadata: text("metadata", { mode: "json" }).$type<AgentMessage["metadata"] | null>(),
     status: text("status", {
       enum: ["submitted", "streaming", "ready", "error"],
     })

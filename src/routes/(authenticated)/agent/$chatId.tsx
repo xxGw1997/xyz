@@ -137,7 +137,7 @@ function RouteComponent() {
   } = useChat<AgentMessage>({
     id: chatId,
     messages: initialMessages,
-    transport: new DefaultChatTransport({
+    transport: new DefaultChatTransport<AgentMessage>({
       api: chatAgentClient.chats[":chatId"].messages
         .$url({ param: { chatId } })
         .toString(),
@@ -167,8 +167,45 @@ function RouteComponent() {
     }),
     sendAutomaticallyWhen:
       lastAssistantMessageIsCompleteWithApprovalResponses,
+    onData: (part) => {
+      if (part.type !== "data-chat-title") return;
+      if (!part.data || typeof part.data !== "object") return;
+
+      const data = part.data as Record<string, unknown>;
+      if (data.chatId !== chatId || typeof data.title !== "string") return;
+
+      console.log('ℹ️ℹ️ℹ️', JSON.stringify(data))
+      const title = data.title;
+
+      queryClient.setQueryData<Awaited<ReturnType<typeof fetchChatDetail>>>(
+        ["agent-chat-detail", chatId],
+        (currentChat) =>
+          currentChat
+            ? {
+                ...currentChat,
+                title,
+              }
+            : currentChat,
+      );
+
+      queryClient.setQueryData<Awaited<ReturnType<typeof fetchChats>>>(
+        ["agent-chats"],
+        (currentChats) =>
+          currentChats?.map((chat) =>
+            chat.id === chatId
+              ? {
+                  ...chat,
+                  title,
+                }
+              : chat,
+          ),
+      );
+    },
     onFinish: () => {
       queryClient.invalidateQueries({ queryKey: ["agent-chats"] });
+      queryClient.invalidateQueries({
+        queryKey: ["agent-chat-detail", chatId],
+      });
       queryClient.invalidateQueries({
         queryKey: ["agent-chat-messages", chatId],
       });

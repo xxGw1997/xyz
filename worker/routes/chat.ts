@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-import type { UIMessage } from "ai";
 import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { createDb } from "../lib/db";
 import { aiChat, aiChatMessage } from "../lib/db/schema";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import type { AuthVar } from "../types";
 import { getAgentByName } from "agents";
+import type { AgentMessage } from "../agents/types";
 
 export const chatAgentRoute = new Hono<{ Bindings: Env; Variables: AuthVar }>();
 
@@ -21,7 +21,7 @@ export const chatAgentType = chatAgentRoute
     await db.insert(aiChat).values({
       id: chatId,
       userId,
-      title: "New Chat",
+      title: null,
       model: "deepseek-v4-pro",
       systemPrompt: "SYSTEM_PROMPT",
       createdAt: now,
@@ -98,7 +98,7 @@ export const chatAgentType = chatAgentRoute
       .where(eq(aiChatMessage.chatId, chatId))
       .orderBy(asc(aiChatMessage.createdAt));
 
-    const messages: UIMessage[] = rows.map((row) => ({
+    const messages: AgentMessage[] = rows.map((row) => ({
       id: row.id,
       role: row.role,
       content: row.parts
@@ -210,8 +210,8 @@ export const chatAgentType = chatAgentRoute
     });
 
     const body = await c.req.json<{
-      message?: UIMessage;
-      messages?: UIMessage[];
+      message?: AgentMessage;
+      messages?: AgentMessage[];
     }>();
     const headers = new Headers(c.req.raw.headers);
     headers.set("content-type", "application/json");
