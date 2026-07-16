@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+} from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatAgentClient } from "@/lib/hono-client";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -130,6 +133,7 @@ function RouteComponent() {
     status,
     error,
     clearError,
+    addToolApprovalResponse,
   } = useChat<AgentMessage>({
     id: chatId,
     messages: initialMessages,
@@ -138,17 +142,31 @@ function RouteComponent() {
         .$url({ param: { chatId } })
         .toString(),
       prepareSendMessagesRequest: ({ messages: requestMessages }) => {
-        const lastUserMessage = [...requestMessages]
-          .reverse()
-          .find((message) => message.role === "user");
+        const hasApprovalResponse = requestMessages.some((message) =>
+          message.parts.some((part) => {
+            const candidate = part as Record<string, unknown>;
+            return (
+              candidate.state === "approval-responded" ||
+              candidate.state === "output-denied"
+            );
+          }),
+        );
 
         return {
           body: {
-            message: lastUserMessage ? getMessageText(lastUserMessage) : "",
+            ...(hasApprovalResponse
+              ? { messages: requestMessages }
+              : {
+                  message: [...requestMessages]
+                    .reverse()
+                    .find((message) => message.role === "user"),
+                }),
           },
         };
       },
     }),
+    sendAutomaticallyWhen:
+      lastAssistantMessageIsCompleteWithApprovalResponses,
     onFinish: () => {
       queryClient.invalidateQueries({ queryKey: ["agent-chats"] });
       queryClient.invalidateQueries({
@@ -390,6 +408,9 @@ function RouteComponent() {
                                   isLastMessage={isLastMessage}
                                   isStreaming={isStreaming}
                                   message={message}
+                                  onApproval={(approval) =>
+                                    addToolApprovalResponse(approval)
+                                  }
                                 />
                               </MessageContent>
                             </Message>

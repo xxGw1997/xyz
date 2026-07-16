@@ -1,5 +1,5 @@
 import { Agent } from "agents";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   convertToModelMessages,
   createIdGenerator,
@@ -13,6 +13,7 @@ import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createDb } from "../lib/db";
 import { SYSTEM_PROMPT } from "./prompts";
 import { aiChat, aiChatMessage } from "../lib/db/schema";
+import { mergeApprovalStates, prepareModelContext } from "./message-utils";
 import { tools } from "./tools";
 
 type ChatAgentProps = {
@@ -21,7 +22,8 @@ type ChatAgentProps = {
 };
 
 type ChatAgentRequestBody = {
-  message?: string;
+  message?: UIMessage;
+  messages?: UIMessage[];
   chatId?: string;
   userId?: string;
 };
@@ -43,7 +45,7 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
     const body = await request.json<ChatAgentRequestBody>();
     this.setChatContext(body);
 
-    if (!body.message?.trim()) {
+    if (!body.message && !body.messages?.length) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
 
@@ -58,33 +60,44 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
       );
     }
 
-    return this.handleMessages(body.message, this.userId);
+    return this.handleMessages(body, this.userId);
   }
+
   private async handleMessages(
-    userInput: string,
+    body: ChatAgentRequestBody,
     userId: string,
   ): Promise<Response> {
-    const history = await this.prepareMessages();
-    const userMessage: UIMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      parts: [{ type: "text", text: userInput }],
-    };
+    const isToolApprovalFlow = Boolean(body.messages?.length);
+    const messagesFromDb = await this.getMessagesByChatId();
+    let originalMessages: UIMessage[];
 
-    await this.appendMessages(this.chatId, userId, [userMessage]);
-
-    const originalMessages = [...history, userMessage];
+    if (isToolApprovalFlow && body.messages) {
+      originalMessages = mergeApprovalStates(messagesFromDb, body.messages);
+    } else if (body.message?.role === "user") {
+      await this.appendMessages(this.chatId, userId, [body.message]);
+      originalMessages = [...messagesFromDb, body.message];
+    } else {
+      return Response.json(
+        { error: "A user message is required" },
+        { status: 400 },
+      );
+    }
 
     const deepseek = createDeepSeek({
       apiKey: this.env.AI_API_KEY,
       baseURL: this.env.AI_BASE_URL,
     });
 
+    const modelContextMessages = prepareModelContext(originalMessages);
+
     const result = streamText({
       model: deepseek(this.env.AI_MODEL),
       instructions: SYSTEM_PROMPT,
-      messages: await convertToModelMessages(originalMessages),
+      messages: await convertToModelMessages(modelContextMessages),
       tools: tools,
+      toolApproval: {
+        getWeather: "user-approval",
+      },
       stopWhen: isStepCount(5),
     });
 
@@ -97,30 +110,17 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
           size: 16,
         }),
         onEnd: async ({ messages }) => {
-          const newAssistantMessages = (messages as UIMessage[]).filter(
-            (message) => message.role === "assistant",
+          await this.appendMessages(
+            this.chatId,
+            userId,
+            messages as UIMessage[],
           );
-          const lastAssistantMessage = newAssistantMessages.at(-1);
-          if (lastAssistantMessage) {
-            await this.appendMessages(this.chatId, userId, [
-              lastAssistantMessage,
-            ]);
-          }
         },
       }),
     });
   }
 
-  private buildMessageContent(parts: UIMessage["parts"]): string {
-    return parts
-      .filter(
-        (part): part is { type: "text"; text: string } => part.type === "text",
-      )
-      .map((part) => part.text)
-      .join("");
-  }
-
-  private async prepareMessages(): Promise<UIMessage[]> {
+  private async getMessagesByChatId(): Promise<UIMessage[]> {
     const db = createDb();
     const rows = await db
       .select()
@@ -128,22 +128,12 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
       .where(eq(aiChatMessage.chatId, this.chatId))
       .orderBy(aiChatMessage.createdAt);
 
-    // TODO: 根据rows保留上下文大小
-
     return rows.map((item) => ({
       id: item.id,
       role: item.role,
-      content: this.buildMessageContent(item.parts),
-      parts: item.parts.filter((part) => this.isRetainablePart(part)),
+      parts: item.parts,
       ...(item.metadata ? { metadata: item.metadata } : {}),
     }));
-  }
-
-  private isRetainablePart(part: UIMessage["parts"][number]): boolean {
-    return (
-      part.type === "text" ||
-      (typeof part.type === "string" && part.type.startsWith("tool-"))
-    );
   }
 
   private async appendMessages(
@@ -179,7 +169,15 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
               updatedAt: new Date(now + index),
             })),
           )
-          .onConflictDoNothing({ target: aiChatMessage.id });
+          .onConflictDoUpdate({
+            target: aiChatMessage.id,
+            set: {
+              parts: sql`excluded.parts`,
+              metadata: sql`excluded.metadata`,
+              status: sql`excluded.status`,
+              updatedAt: sql`excluded.updated_at`,
+            },
+          });
       }
 
       await db

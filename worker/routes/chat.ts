@@ -209,7 +209,10 @@ export const chatAgentType = chatAgentRoute
       },
     });
 
-    const body = await c.req.json<{ message?: string }>();
+    const body = await c.req.json<{
+      message?: UIMessage;
+      messages?: UIMessage[];
+    }>();
     const headers = new Headers(c.req.raw.headers);
     headers.set("content-type", "application/json");
     headers.delete("content-length");
