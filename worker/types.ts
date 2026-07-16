@@ -1,8 +1,11 @@
 import z from "zod";
 import type { auth } from "./lib/auth";
 import type { roomType } from "./routes/room";
+import type { chatAgentType } from "./routes/chat";
+export type { AgentTools } from "./agents/tools/types";
 
 export type RoomType = typeof roomType;
+export type ChatAgentType = typeof chatAgentType
 
 export type AuthVar = {
   user: typeof auth.$Infer.Session.user;
@@ -52,3 +55,6 @@ export const MessageSchema = z.discriminatedUnion("type", [
 export type Message = z.infer<typeof MessageSchema>;
 export type SystemMessage = z.infer<typeof SystemMessageSchema>;
 export type UserMessage = z.infer<typeof UserMessageSchema>;
+
+
+

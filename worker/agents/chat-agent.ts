@@ -9,10 +9,11 @@ import {
   toUIMessageStream,
   type UIMessage,
 } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createDb } from "../lib/db";
 import { SYSTEM_PROMPT } from "./prompts";
 import { aiChat, aiChatMessage } from "../lib/db/schema";
+import { tools } from "./tools";
 
 type ChatAgentProps = {
   chatId?: string;
@@ -74,16 +75,16 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
 
     const originalMessages = [...history, userMessage];
 
-    const provider = createOpenAI({
+    const deepseek = createDeepSeek({
       apiKey: this.env.AI_API_KEY,
       baseURL: this.env.AI_BASE_URL,
     });
-    const llmModel = provider(this.env.AI_MODEL);
+
     const result = streamText({
-      model: llmModel,
+      model: deepseek(this.env.AI_MODEL),
       instructions: SYSTEM_PROMPT,
       messages: await convertToModelMessages(originalMessages),
-      // tools:
+      tools: tools,
       stopWhen: isStepCount(5),
     });
 
@@ -96,16 +97,27 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
           size: 16,
         }),
         onEnd: async ({ messages }) => {
-          await this.appendMessages(
-            this.chatId,
-            userId,
-            (messages as UIMessage[]).filter(
-              (message) => message.role === "assistant",
-            ),
+          const newAssistantMessages = (messages as UIMessage[]).filter(
+            (message) => message.role === "assistant",
           );
+          const lastAssistantMessage = newAssistantMessages.at(-1);
+          if (lastAssistantMessage) {
+            await this.appendMessages(this.chatId, userId, [
+              lastAssistantMessage,
+            ]);
+          }
         },
       }),
     });
+  }
+
+  private buildMessageContent(parts: UIMessage["parts"]): string {
+    return parts
+      .filter(
+        (part): part is { type: "text"; text: string } => part.type === "text",
+      )
+      .map((part) => part.text)
+      .join("");
   }
 
   private async prepareMessages(): Promise<UIMessage[]> {
@@ -116,28 +128,22 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
       .where(eq(aiChatMessage.chatId, this.chatId))
       .orderBy(aiChatMessage.createdAt);
 
-    return rows.flatMap((item) => {
-      if (
-        item.role !== "system" &&
-        item.role !== "user" &&
-        item.role !== "assistant"
-      )
-        return [];
+    // TODO: 根据rows保留上下文大小
 
-      return [
-        {
-          id: item.id,
-          role: item.role,
-          content: item.parts
-            .filter(
-              (p): p is { type: "text"; text: string } => p.type === "text",
-            )
-            .map((p) => p.text)
-            .join(""),
-          parts: item.parts,
-        },
-      ];
-    });
+    return rows.map((item) => ({
+      id: item.id,
+      role: item.role,
+      content: this.buildMessageContent(item.parts),
+      parts: item.parts.filter((part) => this.isRetainablePart(part)),
+      ...(item.metadata ? { metadata: item.metadata } : {}),
+    }));
+  }
+
+  private isRetainablePart(part: UIMessage["parts"][number]): boolean {
+    return (
+      part.type === "text" ||
+      (typeof part.type === "string" && part.type.startsWith("tool-"))
+    );
   }
 
   private async appendMessages(

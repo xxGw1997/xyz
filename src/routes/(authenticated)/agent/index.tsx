@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { chatAgentClient } from "@/lib/hono-client";
 import {
   ArrowUp,
   Bot,
@@ -20,43 +21,18 @@ export const Route = createFileRoute("/(authenticated)/agent/")({
   component: RouteComponent,
 });
 
-type ChatSummary = {
-  id: string;
-  title: string | null;
-};
-
-type CreateChatResponse = {
-  chatId: string;
-};
-
-type ChatListResponse = {
-  chats: ChatSummary[];
-};
-
-const agentApiBase = `${import.meta.env.VITE_BASE_URL}/api/agent`;
-
-async function fetchChats(): Promise<ChatSummary[]> {
-  const response = await fetch(`${agentApiBase}/chats`);
-
-  if (!response.ok) {
-    throw new Error("获取历史对话失败");
-  }
-
-  const data = (await response.json()) as ChatListResponse;
-  return data.chats;
+async function fetchChats() {
+  const res = await chatAgentClient.chats.$get();
+  if (!res.ok) throw new Error("获取历史对话失败");
+  const data = await res.json();
+  return (data as { chats: Array<{ id: string; title: string | null }> }).chats;
 }
 
-async function createChat(): Promise<string> {
-  const response = await fetch(`${agentApiBase}/chats`, {
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    throw new Error("创建对话失败");
-  }
-
-  const data = (await response.json()) as CreateChatResponse;
-  return data.chatId;
+async function createChat() {
+  const res = await chatAgentClient.chats.$post();
+  if (!res.ok) throw new Error("创建对话失败");
+  const data = await res.json();
+  return (data as { chatId: string }).chatId;
 }
 
 function RouteComponent() {

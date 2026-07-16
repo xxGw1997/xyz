@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { chatAgentClient } from "@/lib/hono-client";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Bot,
@@ -25,7 +26,6 @@ import {
   MessageAction,
   MessageActions,
   MessageContent,
-  MessageResponse,
 } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -34,12 +34,11 @@ import {
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
 import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
+  MessageParts,
+} from "@/components/agent/message-parts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { AgentMessage } from "@/types";
 
 export const Route = createFileRoute("/(authenticated)/agent/$chatId")({
   component: RouteComponent,
@@ -52,121 +51,45 @@ export const Route = createFileRoute("/(authenticated)/agent/$chatId")({
   }),
 });
 
-type ChatSummary = {
-  id: string;
-  title: string | null;
-};
-
-type ChatDetail = {
-  id: string;
-  title: string | null;
-  model: string | null;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-};
-
-type ChatListResponse = {
-  chats: ChatSummary[];
-};
-
-type ChatDetailResponse = {
-  chatDetail?: ChatDetail;
-};
-
-type ChatMessagesResponse = {
-  messages: UIMessage[];
-};
-
-type CreateChatResponse = {
-  chatId: string;
-};
-
-const agentApiBase = `${import.meta.env.VITE_BASE_URL}/api/agent`;
-
-async function fetchChats(): Promise<ChatSummary[]> {
-  const response = await fetch(`${agentApiBase}/chats`);
-
-  if (!response.ok) throw new Error("获取历史对话失败");
-
-  const data = (await response.json()) as ChatListResponse;
+async function fetchChats() {
+  const res = await chatAgentClient.chats.$get();
+  if (!res.ok) throw new Error("获取历史对话失败");
+  const data = await res.json();
   return data.chats;
 }
 
-async function fetchChatDetail(
-  chatId: string,
-): Promise<ChatDetail | undefined> {
-  const response = await fetch(`${agentApiBase}/chats/${chatId}`);
-
-  if (!response.ok) throw new Error("获取对话详情失败");
-
-  const data = (await response.json()) as ChatDetailResponse;
+async function fetchChatDetail(chatId: string) {
+  const res = await chatAgentClient.chats[":chatId"].$get({
+    param: { chatId },
+  });
+  if (!res.ok) throw new Error("获取对话详情失败");
+  const data = await res.json();
   return data.chatDetail;
 }
 
-async function fetchMessages(chatId: string): Promise<UIMessage[]> {
-  const response = await fetch(`${agentApiBase}/chats/${chatId}/messages`);
-
-  if (!response.ok) throw new Error("获取对话消息失败");
-
-  const data = (await response.json()) as ChatMessagesResponse;
-  return data.messages;
+async function fetchMessages(chatId: string) {
+  const res = await chatAgentClient.chats[":chatId"].messages.$get({
+    param: { chatId },
+  });
+  if (!res.ok) throw new Error("获取对话消息失败");
+  const data = await res.json();
+  return (data as { messages: AgentMessage[] }).messages;
 }
 
-async function createChat(): Promise<string> {
-  const response = await fetch(`${agentApiBase}/chats`, { method: "POST" });
-
-  if (!response.ok) throw new Error("创建对话失败");
-
-  const data = (await response.json()) as CreateChatResponse;
+async function createChat() {
+  const res = await chatAgentClient.chats.$post();
+  if (!res.ok) throw new Error("创建对话失败");
+  const data = await res.json();
   return data.chatId;
 }
 
-function getMessageText(message: UIMessage): string {
+function getMessageText(message: AgentMessage): string {
   return message.parts
     .filter(
       (part): part is { type: "text"; text: string } => part.type === "text",
     )
     .map((part) => part.text)
     .join("");
-}
-
-function MessageParts({
-  isLastMessage,
-  isStreaming,
-  message,
-}: {
-  isLastMessage: boolean;
-  isStreaming: boolean;
-  message: UIMessage;
-}) {
-  const reasoningParts = message.parts.filter(
-    (part): part is { type: "reasoning"; text: string } =>
-      part.type === "reasoning",
-  );
-  const reasoningText = reasoningParts.map((part) => part.text).join("\n\n");
-  const lastPart = message.parts.at(-1);
-  const isReasoningStreaming =
-    isLastMessage && isStreaming && lastPart?.type === "reasoning";
-
-  return (
-    <>
-      {reasoningParts.length > 0 && (
-        <Reasoning className="w-full" isStreaming={isReasoningStreaming}>
-          <ReasoningTrigger />
-          <ReasoningContent>{reasoningText}</ReasoningContent>
-        </Reasoning>
-      )}
-      {message.parts.map((part, partIndex) => {
-        if (part.type !== "text") return null;
-
-        return (
-          <MessageResponse key={`${message.id}-${partIndex}`}>
-            {part.text}
-          </MessageResponse>
-        );
-      })}
-    </>
-  );
 }
 
 function RouteComponent() {
@@ -207,11 +130,13 @@ function RouteComponent() {
     status,
     error,
     clearError,
-  } = useChat({
+  } = useChat<AgentMessage>({
     id: chatId,
     messages: initialMessages,
     transport: new DefaultChatTransport({
-      api: `${agentApiBase}/chats/${chatId}/messages`,
+      api: chatAgentClient.chats[":chatId"].messages
+        .$url({ param: { chatId } })
+        .toString(),
       prepareSendMessagesRequest: ({ messages: requestMessages }) => {
         const lastUserMessage = [...requestMessages]
           .reverse()
@@ -439,7 +364,8 @@ function RouteComponent() {
                   ) : (
                     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
                       {messages.map((message, messageIndex) => {
-                        const isLastMessage = messageIndex === messages.length - 1;
+                        const isLastMessage =
+                          messageIndex === messages.length - 1;
                         const messageText = getMessageText(message);
 
                         return (
