@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
@@ -7,7 +14,15 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatAgentClient } from "@/lib/hono-client";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Bot, Check, CopyIcon, Pencil, RefreshCcwIcon, Sparkles, X } from "lucide-react";
+import {
+  Bot,
+  Check,
+  CopyIcon,
+  Pencil,
+  RefreshCcwIcon,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -113,7 +128,13 @@ function RouteComponent() {
   });
 
   const renameChatMutation = useMutation({
-    mutationFn: async ({ chatId: targetChatId, title }: { chatId: string; title: string }) => {
+    mutationFn: async ({
+      chatId: targetChatId,
+      title,
+    }: {
+      chatId: string;
+      title: string;
+    }) => {
       const res = await chatAgentClient.chats[":chatId"].$patch({
         param: { chatId: targetChatId },
         json: { title },
@@ -126,7 +147,10 @@ function RouteComponent() {
       queryClient.setQueryData(["agent-chat-detail", chatId], chat);
       queryClient.setQueryData<Awaited<ReturnType<typeof fetchChats>>>(
         ["agent-chats"],
-        (currentChats) => currentChats?.map((item) => (item.id === chat.id ? { ...item, title: chat.title } : item)),
+        (currentChats) =>
+          currentChats?.map((item) =>
+            item.id === chat.id ? { ...item, title: chat.title } : item,
+          ),
       );
       setIsEditingTitle(false);
     },
@@ -143,7 +167,8 @@ function RouteComponent() {
     onSuccess: (_, deletedChatId) => {
       queryClient.setQueryData<Awaited<ReturnType<typeof fetchChats>>>(
         ["agent-chats"],
-        (currentChats) => currentChats?.filter((item) => item.id !== deletedChatId),
+        (currentChats) =>
+          currentChats?.filter((item) => item.id !== deletedChatId),
       );
       if (deletedChatId === chatId) navigate({ to: "/agent" });
     },
@@ -336,25 +361,52 @@ function RouteComponent() {
               </div>
               <div className="min-w-0">
                 {isEditingTitle ? (
-                  <form onSubmit={handleRenameTitle} className="flex items-center gap-1">
+                  <form
+                    onSubmit={handleRenameTitle}
+                    className="flex items-center gap-1"
+                  >
                     <input
                       value={titleInput}
-                      onChange={(event) => setTitleInput(event.currentTarget.value)}
+                      onChange={(event) =>
+                        setTitleInput(event.currentTarget.value)
+                      }
                       maxLength={35}
                       autoFocus
                       className="h-7 w-48 rounded-md border bg-background px-2 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label="对话标题"
                     />
-                    <Button type="submit" variant="ghost" size="icon" className="size-7" disabled={!titleInput.trim() || renameChatMutation.isPending} aria-label="保存标题">
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      disabled={
+                        !titleInput.trim() || renameChatMutation.isPending
+                      }
+                      aria-label="保存标题"
+                    >
                       <Check className="size-4" />
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => setIsEditingTitle(false)} aria-label="取消修改标题">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={() => setIsEditingTitle(false)}
+                      aria-label="取消修改标题"
+                    >
                       <X className="size-4" />
                     </Button>
                   </form>
                 ) : (
-                  <button type="button" onClick={startEditingTitle} className="group flex max-w-full items-center gap-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                    <span className="truncate text-sm font-semibold">{currentTitle}</span>
+                  <button
+                    type="button"
+                    onClick={startEditingTitle}
+                    className="group flex max-w-full items-center gap-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="truncate text-sm font-semibold">
+                      {currentTitle}
+                    </span>
                     <Pencil className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
                   </button>
                 )}
@@ -410,16 +462,6 @@ function RouteComponent() {
                     </ConversationEmptyState>
                   ) : (
                     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
-                      {isAwaitingAssistantResponse && (
-                        <Message
-                          from="assistant"
-                          className="mr-auto max-w-[84%] sm:max-w-[72%]"
-                        >
-                          <MessageContent className="bg-transparent px-0 py-1 text-sm leading-7 text-[#1d1d1f] shadow-none dark:text-[#f5f5f7] sm:text-base">
-                            <Shimmer duration={1}>Thinking...</Shimmer>
-                          </MessageContent>
-                        </Message>
-                      )}
                       {messages.map((message, messageIndex) => {
                         const isLastMessage =
                           messageIndex === messages.length - 1;
@@ -437,7 +479,7 @@ function RouteComponent() {
                                   ? "ml-auto max-w-[78%] sm:max-w-[68%]"
                                   : hasWeatherTool
                                     ? "mr-auto w-[calc(100vw-2rem)] max-w-full sm:w-[32rem]"
-                                  : "mr-auto max-w-[84%] sm:max-w-[72%]",
+                                    : "mr-auto max-w-[84%] sm:max-w-[72%]",
                               )}
                             >
                               <MessageContent
@@ -482,6 +524,16 @@ function RouteComponent() {
                           </Fragment>
                         );
                       })}
+                      {isAwaitingAssistantResponse && (
+                        <Message
+                          from="assistant"
+                          className="mr-auto max-w-[84%] sm:max-w-[72%]"
+                        >
+                          <MessageContent className="bg-transparent px-0 py-1 text-sm leading-7 text-[#1d1d1f] shadow-none dark:text-[#f5f5f7] sm:text-base">
+                            <Shimmer duration={1}>Thinking...</Shimmer>
+                          </MessageContent>
+                        </Message>
+                      )}
                     </div>
                   )}
                 </ConversationContent>
