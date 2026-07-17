@@ -312,7 +312,6 @@ export const aiChatMessage = sqliteTable(
     chatId: text("chat_id")
       .notNull()
       .references(() => aiChat.id, { onDelete: "cascade" }),
-    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     role: text("role")
       .$type<AgentMessage["role"]>()
       .notNull(),
@@ -335,7 +334,6 @@ export const aiChatMessage = sqliteTable(
   },
   (t) => [
     index("ai_chat_message_chat_created_idx").on(t.chatId, t.createdAt),
-    index("ai_chat_message_user_idx").on(t.userId),
     index("ai_chat_message_role_idx").on(t.role),
   ]
 );
@@ -396,10 +394,6 @@ export const aiChatMessageRelations = relations(aiChatMessage, ({ one }) => ({
   chat: one(aiChat, {
     fields: [aiChatMessage.chatId],
     references: [aiChat.id],
-  }),
-  user: one(user, {
-    fields: [aiChatMessage.userId],
-    references: [user.id],
   }),
 }));
 

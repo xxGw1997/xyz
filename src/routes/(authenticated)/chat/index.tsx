@@ -7,9 +7,14 @@ import { CreateRoomDialog } from "@/components/chat-room/create-room-dialog";
 import { JoinRoomDialog } from "@/components/chat-room/join-room-dialog";
 import { useAuthContext } from "@/components/providers/auth-provider";
 import { RoomCard } from "@/components/chat-room/room-card";
+import { DefaultLayout } from "@/components/default-layout";
 
 export const Route = createFileRoute("/(authenticated)/chat/")({
-  component: RouteComponent,
+  component: () => (
+    <DefaultLayout>
+      <RouteComponent />
+    </DefaultLayout>
+  ),
 });
 
 function RouteComponent() {

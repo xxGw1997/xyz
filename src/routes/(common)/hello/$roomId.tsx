@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/hello/$roomId")({
+export const Route = createFileRoute("/(common)/hello/$roomId")({
   params: {
     parse: (param) => ({
       roomId: param.roomId as string,

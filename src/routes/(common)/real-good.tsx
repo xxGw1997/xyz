@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuroraText } from "@/components/ui/aurora-text";
 
-export const Route = createFileRoute("/real-good")({
+export const Route = createFileRoute("/(common)/real-good")({
   component: About,
 });
 

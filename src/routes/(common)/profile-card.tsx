@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/profile-card")({
+export const Route = createFileRoute("/(common)/profile-card")({
   component: RouteComponent,
 });
 

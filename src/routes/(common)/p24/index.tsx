@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ModeOne } from "@/components/p24/mode-one";
 import { ModeTwo } from "@/components/p24/mode-two";
 
-export const Route = createFileRoute("/p24/")({
+export const Route = createFileRoute("/(common)/p24/")({
   component: RouteComponent,
 });
 

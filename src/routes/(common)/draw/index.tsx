@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MyExcalidraw } from "@/components/my-excalidraw";
 
-export const Route = createFileRoute("/draw/")({
+export const Route = createFileRoute("/(common)/draw/")({
   component: RouteComponent,
 });
 

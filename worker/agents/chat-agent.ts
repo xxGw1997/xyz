@@ -67,13 +67,10 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
       );
     }
 
-    return this.handleMessages(body, this.userId);
+    return this.handleMessages(body);
   }
 
-  private async handleMessages(
-    body: ChatAgentRequestBody,
-    userId: string,
-  ): Promise<Response> {
+  private async handleMessages(body: ChatAgentRequestBody): Promise<Response> {
     const isToolApprovalFlow = Boolean(body.messages?.length);
     const messagesFromDb = await this.getMessagesByChatId();
     let originalMessages: AgentMessage[];
@@ -81,7 +78,7 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
     if (isToolApprovalFlow && body.messages) {
       originalMessages = mergeApprovalStates(messagesFromDb, body.messages);
     } else if (body.message?.role === "user") {
-      await this.appendMessages(this.chatId, userId, [body.message]);
+      await this.appendMessages(this.chatId, [body.message]);
       originalMessages = [...messagesFromDb, body.message];
     } else {
       return Response.json(
@@ -144,7 +141,7 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
         size: 16,
       }),
       onEnd: async ({ messages }) => {
-        await this.appendMessages(this.chatId, userId, messages);
+        await this.appendMessages(this.chatId, messages);
       },
       onError: (error) => {
         console.error("AI message stream failed", error);
@@ -219,15 +216,10 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
     }));
   }
 
-  private async appendMessages(
-    chatId: string,
-    userId: string,
-    messages: AgentMessage[],
-  ) {
-    if (!chatId || !userId) {
+  private async appendMessages(chatId: string, messages: AgentMessage[]) {
+    if (!chatId) {
       console.error("Skip saving AI chat messages: missing context", {
         chatId,
-        userId,
       });
       return;
     }
@@ -243,7 +235,6 @@ export class ChatAgent extends Agent<Env, unknown, ChatAgentProps> {
             messages.map((msg, index) => ({
               id: msg.id,
               chatId,
-              userId,
               role: msg.role,
               parts: msg.parts,
               metadata: msg.metadata ?? null,

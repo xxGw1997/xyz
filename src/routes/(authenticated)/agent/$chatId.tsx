@@ -1,22 +1,13 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
   lastAssistantMessageIsCompleteWithApprovalResponses,
 } from "ai";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatAgentClient } from "@/lib/hono-client";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  Bot,
-  ChevronRight,
-  CopyIcon,
-  MessageCircle,
-  PanelLeft,
-  Plus,
-  RefreshCcwIcon,
-  Sparkles,
-} from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Bot, Check, CopyIcon, Pencil, RefreshCcwIcon, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -30,16 +21,21 @@ import {
   MessageActions,
   MessageContent,
 } from "@/components/ai-elements/message";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
   PromptInput,
   type PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import {
-  MessageParts,
-} from "@/components/agent/message-parts";
+import { MessageParts } from "@/components/agent/message-parts";
+import { AgentSidebar } from "@/components/agent/agent-sidebar";
 import { Button } from "@/components/ui/button";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import type { AgentMessage } from "@/types";
 
@@ -79,13 +75,6 @@ async function fetchMessages(chatId: string) {
   return (data as { messages: AgentMessage[] }).messages;
 }
 
-async function createChat() {
-  const res = await chatAgentClient.chats.$post();
-  if (!res.ok) throw new Error("创建对话失败");
-  const data = await res.json();
-  return data.chatId;
-}
-
 function getMessageText(message: AgentMessage): string {
   return message.parts
     .filter(
@@ -99,7 +88,8 @@ function RouteComponent() {
   const { chatId } = Route.useParams();
   const { q } = Route.useSearch();
   const [input, setInput] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState("");
   const hasSentInitialMessage = useRef(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -112,6 +102,44 @@ function RouteComponent() {
   const chatDetailQuery = useQuery({
     queryKey: ["agent-chat-detail", chatId],
     queryFn: () => fetchChatDetail(chatId),
+  });
+
+  const renameChatMutation = useMutation({
+    mutationFn: async ({ chatId: targetChatId, title }: { chatId: string; title: string }) => {
+      const res = await chatAgentClient.chats[":chatId"].$patch({
+        param: { chatId: targetChatId },
+        json: { title },
+      });
+      if (!res.ok) throw new Error("修改标题失败");
+      const data = await res.json();
+      return data.chat;
+    },
+    onSuccess: (chat) => {
+      queryClient.setQueryData(["agent-chat-detail", chatId], chat);
+      queryClient.setQueryData<Awaited<ReturnType<typeof fetchChats>>>(
+        ["agent-chats"],
+        (currentChats) => currentChats?.map((item) => (item.id === chat.id ? { ...item, title: chat.title } : item)),
+      );
+      setIsEditingTitle(false);
+    },
+    onError: (renameError) => toast.error(renameError.message),
+  });
+
+  const deleteChatMutation = useMutation({
+    mutationFn: async (targetChatId: string) => {
+      const res = await chatAgentClient.chats[":chatId"].$delete({
+        param: { chatId: targetChatId },
+      });
+      if (!res.ok) throw new Error("删除对话失败");
+    },
+    onSuccess: (_, deletedChatId) => {
+      queryClient.setQueryData<Awaited<ReturnType<typeof fetchChats>>>(
+        ["agent-chats"],
+        (currentChats) => currentChats?.filter((item) => item.id !== deletedChatId),
+      );
+      if (deletedChatId === chatId) navigate({ to: "/agent" });
+    },
+    onError: (deleteError) => toast.error(deleteError.message),
   });
 
   const messagesQuery = useQuery({
@@ -165,8 +193,7 @@ function RouteComponent() {
         };
       },
     }),
-    sendAutomaticallyWhen:
-      lastAssistantMessageIsCompleteWithApprovalResponses,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     onData: (part) => {
       if (part.type !== "data-chat-title") return;
       if (!part.data || typeof part.data !== "object") return;
@@ -174,7 +201,6 @@ function RouteComponent() {
       const data = part.data as Record<string, unknown>;
       if (data.chatId !== chatId || typeof data.title !== "string") return;
 
-      console.log('ℹ️ℹ️ℹ️', JSON.stringify(data))
       const title = data.title;
 
       queryClient.setQueryData<Awaited<ReturnType<typeof fetchChatDetail>>>(
@@ -237,11 +263,13 @@ function RouteComponent() {
     });
   }, [chatId, messagesQuery.isPending, navigate, q, sendMessage]);
 
-  const isNewChat = !messagesQuery.isPending && messages.length === 0 && !q;
   const isBusy = status === "submitted" || status === "streaming";
   const isStreaming = status === "streaming";
+  const isNewChat =
+    !messagesQuery.isPending && messages.length === 0 && !q && !isBusy;
   const chats = chatsQuery.data ?? [];
   const currentTitle = chatDetailQuery.data?.title || "New Chat";
+  const isAwaitingAssistantResponse = status === "submitted";
 
   const handleSubmit = (message: PromptInputMessage) => {
     const value = message.text.trim();
@@ -251,147 +279,86 @@ function RouteComponent() {
     setInput("");
   };
 
-  const handleCreateChat = async () => {
-    try {
-      const newChatId = await createChat();
-      await queryClient.invalidateQueries({ queryKey: ["agent-chats"] });
-      navigate({
-        to: "/agent/$chatId",
-        params: { chatId: newChatId },
-        search: { q: undefined },
-      });
-    } catch (createError) {
-      toast.error(
-        createError instanceof Error ? createError.message : "创建对话失败",
-      );
-    }
+  const handleCreateChat = () => {
+    navigate({
+      to: "/agent",
+    });
+  };
+
+  const startEditingTitle = () => {
+    setTitleInput(currentTitle);
+    setIsEditingTitle(true);
+  };
+
+  const handleRenameTitle = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const title = titleInput.trim();
+    if (!title || title.length > 35) return;
+    renameChatMutation.mutate({ chatId, title });
   };
 
   return (
-    <main className="h-dvh overflow-hidden bg-[#f5f5f7] text-[#1d1d1f] antialiased dark:bg-[#050506] dark:text-[#f5f5f7]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.94),transparent_26%),radial-gradient(circle_at_86%_4%,rgba(202,232,255,0.46),transparent_32%),radial-gradient(circle_at_72%_92%,rgba(255,255,255,0.72),transparent_28%),linear-gradient(135deg,rgba(250,250,252,0.98),rgba(232,235,240,0.78))] dark:bg-[radial-gradient(circle_at_12%_10%,rgba(255,255,255,0.11),transparent_26%),radial-gradient(circle_at_86%_4%,rgba(14,165,233,0.18),transparent_32%),radial-gradient(circle_at_72%_92%,rgba(255,255,255,0.07),transparent_28%),linear-gradient(135deg,rgba(24,24,27,0.98),rgba(5,5,6,0.98))]" />
-      <div className="relative grid h-dvh min-h-0 md:grid-cols-[320px_1fr]">
-        {sidebarOpen && (
-          <button
-            type="button"
-            className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm md:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="关闭历史对话侧边栏"
-          />
-        )}
-
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-40 flex w-[min(320px,88vw)] flex-col border-r border-white/70 bg-white/72 p-4 shadow-2xl shadow-black/10 backdrop-blur-2xl transition-transform duration-300 dark:border-white/10 dark:bg-[#151517]/82 md:static md:z-auto md:h-dvh md:w-auto md:translate-x-0 md:shadow-none",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          )}
-        >
-          <div className="flex items-center justify-end">
-            <Button
-              type="button"
-              size="icon"
-              onClick={handleCreateChat}
-              className="size-11 rounded-full bg-[#1d1d1f] text-white hover:bg-black dark:bg-white dark:text-black"
-              aria-label="新建对话"
-            >
-              <Plus className="size-5" />
-            </Button>
-          </div>
-
-          <div className="mt-6 rounded-[1.75rem] border border-white/70 bg-white/54 p-4 shadow-sm dark:border-white/8 dark:bg-white/8">
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-[#6e6e73] dark:text-[#a1a1aa]">
-              Current
-            </p>
-            <h1 className="mt-2 truncate text-xl font-semibold tracking-tight">
-              {currentTitle}
-            </h1>
-            <p className="mt-2 text-sm text-[#86868b]">
-              {isNewChat ? "新对话，等待第一条消息" : "历史对话，可继续追问"}
-            </p>
-          </div>
-
-          <div className="apple-scrollbar mt-5 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-            {chats.map((chat) => {
-              const active = chat.id === chatId;
-              return (
-                <Link
-                  key={chat.id}
-                  to="/agent/$chatId"
-                  params={{ chatId: chat.id }}
-                  search={{ q: undefined }}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    "group flex min-h-15 items-center gap-3 rounded-3xl px-3 py-3 transition duration-200",
-                    active
-                      ? "bg-[#1d1d1f] text-white shadow-lg shadow-black/15 dark:bg-white dark:text-black"
-                      : "text-[#3a3a3c] hover:bg-white/70 hover:shadow-sm dark:text-[#f5f5f7] dark:hover:bg-white/10",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "grid size-10 shrink-0 place-items-center rounded-full",
-                      active
-                        ? "bg-white/15 dark:bg-black/10"
-                        : "bg-[#f2f2f7] dark:bg-white/10",
-                    )}
-                  >
-                    <MessageCircle className="size-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold">
-                      {chat.title || "New Chat"}
-                    </span>
-                    <span
-                      className={cn(
-                        "mt-0.5 block truncate text-xs",
-                        active
-                          ? "text-white/70 dark:text-black/55"
-                          : "text-[#86868b]",
-                      )}
-                    >
-                      {active ? "正在查看" : "打开历史记录"}
-                    </span>
-                  </span>
-                  <ChevronRight className="size-4 opacity-60" />
-                </Link>
-              );
-            })}
-          </div>
-        </aside>
-
-        <section className="flex h-dvh min-h-0 flex-col p-3 md:p-5">
-          <header className="flex h-16 shrink-0 items-center justify-between rounded-[1.5rem] border border-white/70 bg-white/66 px-3 shadow-sm shadow-black/5 backdrop-blur-2xl dark:border-white/10 dark:bg-white/7 sm:px-5">
+    <SidebarProvider>
+      <AgentSidebar
+        chats={chats}
+        activeChatId={chatId}
+        isLoading={chatsQuery.isPending}
+        isCreating={false}
+        onCreateChat={handleCreateChat}
+        onRenameChat={async (targetChatId, title) => {
+          await renameChatMutation.mutateAsync({ chatId: targetChatId, title });
+        }}
+        onDeleteChat={async (targetChatId) => {
+          await deleteChatMutation.mutateAsync(targetChatId);
+        }}
+      />
+      <SidebarInset className="h-dvh min-h-0 overflow-hidden bg-background">
+        <section className="flex h-full min-h-0 flex-col">
+          <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 px-3 sm:px-4">
             <div className="flex min-w-0 items-center gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-                className="size-10 rounded-full md:hidden"
-                aria-label="打开历史对话侧边栏"
-              >
-                <PanelLeft className="size-5" />
-              </Button>
-              <div className="grid size-10 place-items-center rounded-full bg-[#1d1d1f] text-white dark:bg-white dark:text-black">
-                <Bot className="size-5" />
+              <SidebarTrigger className="size-8" />
+              <div className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
+                <Bot className="size-4" />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{currentTitle}</p>
-                <p className="text-xs text-[#86868b]">
+                {isEditingTitle ? (
+                  <form onSubmit={handleRenameTitle} className="flex items-center gap-1">
+                    <input
+                      value={titleInput}
+                      onChange={(event) => setTitleInput(event.currentTarget.value)}
+                      maxLength={35}
+                      autoFocus
+                      className="h-7 w-48 rounded-md border bg-background px-2 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="对话标题"
+                    />
+                    <Button type="submit" variant="ghost" size="icon" className="size-7" disabled={!titleInput.trim() || renameChatMutation.isPending} aria-label="保存标题">
+                      <Check className="size-4" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => setIsEditingTitle(false)} aria-label="取消修改标题">
+                      <X className="size-4" />
+                    </Button>
+                  </form>
+                ) : (
+                  <button type="button" onClick={startEditingTitle} className="group flex max-w-full items-center gap-1 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <span className="truncate text-sm font-semibold">{currentTitle}</span>
+                    <Pencil className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+                  </button>
+                )}
+                <p className="text-xs text-muted-foreground">
                   {isNewChat ? "New conversation" : "Saved conversation"}
                 </p>
               </div>
             </div>
-            <div className="hidden items-center gap-2 rounded-full bg-[#f2f2f7] px-3 py-2 text-xs font-medium text-[#6e6e73] dark:bg-white/10 dark:text-[#d1d1d6] sm:flex">
+            <div className="hidden items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground sm:flex">
               <Sparkles className="size-4" />
               {chatDetailQuery.data?.model || "deepseek-v4-pro"}
             </div>
           </header>
 
-          <div className="mt-3 min-h-0 flex-1 overflow-hidden rounded-[2.25rem] border border-white/75 bg-white/50 shadow-[0_28px_100px_rgba(29,29,31,0.11)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/7">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <div className="flex h-full min-h-0 flex-col">
               <Conversation className="apple-scrollbar min-h-0">
-                <ConversationContent className="min-h-full px-5 py-8 sm:px-10 lg:px-16">
+                <ConversationContent className="min-h-full px-4 py-8 sm:px-8 lg:px-12">
                   {messagesQuery.isPending ? (
                     <div className="mx-auto w-full max-w-3xl space-y-4">
                       {Array.from({ length: 4 }).map((_, index) => (
@@ -402,15 +369,15 @@ function RouteComponent() {
                       ))}
                     </div>
                   ) : isNewChat ? (
-                    <ConversationEmptyState className="min-h-[calc(100dvh-15rem)]">
+                    <ConversationEmptyState className="min-h-[calc(100dvh-12rem)]">
                       <div className="max-w-2xl text-center">
-                        <div className="mx-auto grid size-20 place-items-center rounded-[1.75rem] bg-[#1d1d1f] text-white shadow-2xl shadow-black/20 dark:bg-white dark:text-black">
+                        <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
                           <Bot className="size-9" />
                         </div>
-                        <h2 className="mt-8 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+                        <h2 className="mt-6 text-3xl font-semibold tracking-tight sm:text-5xl">
                           开始一段新对话
                         </h2>
-                        <p className="mt-4 text-base leading-7 text-[#6e6e73] dark:text-[#a1a1aa]">
+                        <p className="mt-4 text-base leading-7 text-muted-foreground">
                           这是一个新的 Agent
                           Chat。发送第一条消息后，它会变成可继续追问的历史对话。
                         </p>
@@ -418,6 +385,16 @@ function RouteComponent() {
                     </ConversationEmptyState>
                   ) : (
                     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+                      {isAwaitingAssistantResponse && (
+                        <Message
+                          from="assistant"
+                          className="mr-auto max-w-[84%] sm:max-w-[72%]"
+                        >
+                          <MessageContent className="bg-transparent px-0 py-1 text-sm leading-7 text-[#1d1d1f] shadow-none dark:text-[#f5f5f7] sm:text-base">
+                            <Shimmer duration={1}>Thinking...</Shimmer>
+                          </MessageContent>
+                        </Message>
+                      )}
                       {messages.map((message, messageIndex) => {
                         const isLastMessage =
                           messageIndex === messages.length - 1;
@@ -481,7 +458,7 @@ function RouteComponent() {
               </Conversation>
 
               {error && (
-                <div className="mx-auto mb-3 flex w-[calc(100%-2rem)] max-w-5xl items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                <div className="mx-auto mb-3 flex w-[calc(100%-2rem)] max-w-5xl items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                   <span>{error.message}</span>
                   <Button
                     type="button"
@@ -496,7 +473,7 @@ function RouteComponent() {
 
               <PromptInput
                 onSubmit={handleSubmit}
-                className="mx-auto mb-4 flex w-[calc(100%-2rem)] max-w-5xl items-end gap-3 rounded-[1.35rem] border border-black/5 bg-white/88 p-3 shadow-[0_18px_50px_rgba(29,29,31,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1c1c1e]/90"
+                className="mx-auto mb-3 flex w-[calc(100%-1.5rem)] max-w-5xl items-end gap-3 rounded-2xl border bg-background p-2 shadow-sm"
               >
                 <PromptInputTextarea
                   value={input}
@@ -509,13 +486,13 @@ function RouteComponent() {
                   status={status}
                   onStop={stop}
                   disabled={!isBusy && !input.trim()}
-                  className="size-12 shrink-0 rounded-md bg-[#007aff] text-white shadow-lg shadow-blue-500/25 hover:bg-[#006ee6] disabled:bg-[#d1d1d6] dark:disabled:bg-white/20"
+                  className="size-10 shrink-0 rounded-xl"
                 />
               </PromptInput>
             </div>
           </div>
         </section>
-      </div>
-    </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

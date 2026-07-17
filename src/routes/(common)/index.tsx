@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ProjectCard } from "@/components/project-card";
 import { SocialLinks } from "@/components/social-links";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/(common)/")({
   component: Index,
 });
 

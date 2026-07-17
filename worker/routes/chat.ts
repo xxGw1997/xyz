@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { and, asc, desc, eq, ne } from "drizzle-orm";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import { createDb } from "../lib/db";
 import { aiChat, aiChatMessage } from "../lib/db/schema";
 import { authMiddleware } from "../middlewares/auth.middleware";
@@ -10,6 +12,19 @@ import type { AgentMessage } from "../agents/types";
 export const chatAgentRoute = new Hono<{ Bindings: Env; Variables: AuthVar }>();
 
 chatAgentRoute.use(authMiddleware);
+
+const updateChatSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "标题不能为空")
+    .max(35, "标题不能超过 35 个字符")
+    .optional(),
+  model: z.string().optional(),
+  systemPrompt: z.string().optional(),
+  status: z.enum(["active", "archived"]).optional(),
+  visibility: z.enum(["private", "shared"]).optional(),
+});
 
 export const chatAgentType = chatAgentRoute
   .post("/chats", async (c) => {
@@ -62,9 +77,9 @@ export const chatAgentType = chatAgentRoute
       .where(condition)
       .limit(1);
 
-    return c.json({
-      chatDetail,
-    });
+    if (!chatDetail) return c.json({ error: "Chat not found" }, 404);
+
+    return c.json({ chatDetail });
   })
   .get("/chats/:chatId/messages", async (c) => {
     const db = createDb();
@@ -111,7 +126,7 @@ export const chatAgentType = chatAgentRoute
 
     return c.json({ messages });
   })
-  .patch("/chats/:chatId", async (c) => {
+  .patch("/chats/:chatId", zValidator("json", updateChatSchema), async (c) => {
     const db = createDb();
     const chatId = c.req.param("chatId");
     const userId = c.get("user").id;
@@ -132,13 +147,7 @@ export const chatAgentType = chatAgentRoute
       return c.json({ error: "Chat not found" }, 404);
     }
 
-    const body = await c.req.json<{
-      title?: string;
-      model?: string;
-      systemPrompt?: string;
-      status?: "active" | "archived";
-      visibility?: "private" | "shared";
-    }>();
+    const body = c.req.valid("json");
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
@@ -151,12 +160,12 @@ export const chatAgentType = chatAgentRoute
     if (body.status !== undefined) updateData.status = body.status;
     if (body.visibility !== undefined) updateData.visibility = body.visibility;
 
-    await db.update(aiChat).set(updateData).where(eq(aiChat.id, chatId));
+    await db.update(aiChat).set(updateData).where(and(eq(aiChat.id, chatId), eq(aiChat.userId, userId)));
 
     const [updated] = await db
       .select()
       .from(aiChat)
-      .where(eq(aiChat.id, chatId))
+      .where(and(eq(aiChat.id, chatId), eq(aiChat.userId, userId)))
       .limit(1);
 
     return c.json({ chat: updated });
@@ -185,7 +194,7 @@ export const chatAgentType = chatAgentRoute
     await db
       .update(aiChat)
       .set({ status: "deleted", updatedAt: new Date() })
-      .where(eq(aiChat.id, chatId));
+      .where(and(eq(aiChat.id, chatId), eq(aiChat.userId, userId)));
 
     return c.json({ success: true });
   })
@@ -197,7 +206,13 @@ export const chatAgentType = chatAgentRoute
     const [isCurrentUserMessage] = await db
       .select()
       .from(aiChat)
-      .where(and(eq(aiChat.id, chatId), eq(aiChat.userId, userId)))
+      .where(
+        and(
+          eq(aiChat.id, chatId),
+          eq(aiChat.userId, userId),
+          ne(aiChat.status, "deleted"),
+        ),
+      )
       .limit(1);
 
     if (!isCurrentUserMessage) return c.json({ error: "Forbidden" }, 403);

@@ -9,63 +9,57 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RealGoodRouteImport } from './routes/real-good'
-import { Route as ProfileCardRouteImport } from './routes/profile-card'
+import { Route as commonRouteRouteImport } from './routes/(common)/route'
 import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as P24IndexRouteImport } from './routes/p24/index'
-import { Route as HelloIndexRouteImport } from './routes/hello/index'
-import { Route as DrawIndexRouteImport } from './routes/draw/index'
-import { Route as HelloRoomIdRouteImport } from './routes/hello/$roomId'
-import { Route as authenticatedDashboardRouteImport } from './routes/(authenticated)/dashboard'
+import { Route as commonIndexRouteImport } from './routes/(common)/index'
+import { Route as commonRealGoodRouteImport } from './routes/(common)/real-good'
+import { Route as commonProfileCardRouteImport } from './routes/(common)/profile-card'
+import { Route as commonP24IndexRouteImport } from './routes/(common)/p24/index'
+import { Route as commonHelloIndexRouteImport } from './routes/(common)/hello/index'
+import { Route as commonDrawIndexRouteImport } from './routes/(common)/draw/index'
 import { Route as authenticatedChatIndexRouteImport } from './routes/(authenticated)/chat/index'
 import { Route as authenticatedAgentIndexRouteImport } from './routes/(authenticated)/agent/index'
+import { Route as commonHelloRoomIdRouteImport } from './routes/(common)/hello/$roomId'
 import { Route as authenticatedChatRoomIdRouteImport } from './routes/(authenticated)/chat/$roomId'
 import { Route as authenticatedAgentChatIdRouteImport } from './routes/(authenticated)/agent/$chatId'
 
-const RealGoodRoute = RealGoodRouteImport.update({
-  id: '/real-good',
-  path: '/real-good',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileCardRoute = ProfileCardRouteImport.update({
-  id: '/profile-card',
-  path: '/profile-card',
+const commonRouteRoute = commonRouteRouteImport.update({
+  id: '/(common)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authenticatedRouteRoute = authenticatedRouteRouteImport.update({
   id: '/(authenticated)',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const commonIndexRoute = commonIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => commonRouteRoute,
 } as any)
-const P24IndexRoute = P24IndexRouteImport.update({
+const commonRealGoodRoute = commonRealGoodRouteImport.update({
+  id: '/real-good',
+  path: '/real-good',
+  getParentRoute: () => commonRouteRoute,
+} as any)
+const commonProfileCardRoute = commonProfileCardRouteImport.update({
+  id: '/profile-card',
+  path: '/profile-card',
+  getParentRoute: () => commonRouteRoute,
+} as any)
+const commonP24IndexRoute = commonP24IndexRouteImport.update({
   id: '/p24/',
   path: '/p24/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => commonRouteRoute,
 } as any)
-const HelloIndexRoute = HelloIndexRouteImport.update({
+const commonHelloIndexRoute = commonHelloIndexRouteImport.update({
   id: '/hello/',
   path: '/hello/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => commonRouteRoute,
 } as any)
-const DrawIndexRoute = DrawIndexRouteImport.update({
+const commonDrawIndexRoute = commonDrawIndexRouteImport.update({
   id: '/draw/',
   path: '/draw/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HelloRoomIdRoute = HelloRoomIdRouteImport.update({
-  id: '/hello/$roomId',
-  path: '/hello/$roomId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authenticatedDashboardRoute = authenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => authenticatedRouteRoute,
+  getParentRoute: () => commonRouteRoute,
 } as any)
 const authenticatedChatIndexRoute = authenticatedChatIndexRouteImport.update({
   id: '/chat/',
@@ -76,6 +70,11 @@ const authenticatedAgentIndexRoute = authenticatedAgentIndexRouteImport.update({
   id: '/agent/',
   path: '/agent/',
   getParentRoute: () => authenticatedRouteRoute,
+} as any)
+const commonHelloRoomIdRoute = commonHelloRoomIdRouteImport.update({
+  id: '/hello/$roomId',
+  path: '/hello/$roomId',
+  getParentRoute: () => commonRouteRoute,
 } as any)
 const authenticatedChatRoomIdRoute = authenticatedChatRoomIdRouteImport.update({
   id: '/chat/$roomId',
@@ -90,120 +89,103 @@ const authenticatedAgentChatIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/profile-card': typeof ProfileCardRoute
-  '/real-good': typeof RealGoodRoute
-  '/dashboard': typeof authenticatedDashboardRoute
-  '/hello/$roomId': typeof HelloRoomIdRoute
-  '/draw/': typeof DrawIndexRoute
-  '/hello/': typeof HelloIndexRoute
-  '/p24/': typeof P24IndexRoute
+  '/profile-card': typeof commonProfileCardRoute
+  '/real-good': typeof commonRealGoodRoute
+  '/': typeof commonIndexRoute
   '/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/hello/$roomId': typeof commonHelloRoomIdRoute
   '/agent/': typeof authenticatedAgentIndexRoute
   '/chat/': typeof authenticatedChatIndexRoute
+  '/draw/': typeof commonDrawIndexRoute
+  '/hello/': typeof commonHelloIndexRoute
+  '/p24/': typeof commonP24IndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/profile-card': typeof ProfileCardRoute
-  '/real-good': typeof RealGoodRoute
-  '/dashboard': typeof authenticatedDashboardRoute
-  '/hello/$roomId': typeof HelloRoomIdRoute
-  '/draw': typeof DrawIndexRoute
-  '/hello': typeof HelloIndexRoute
-  '/p24': typeof P24IndexRoute
+  '/profile-card': typeof commonProfileCardRoute
+  '/real-good': typeof commonRealGoodRoute
+  '/': typeof commonIndexRoute
   '/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/hello/$roomId': typeof commonHelloRoomIdRoute
   '/agent': typeof authenticatedAgentIndexRoute
   '/chat': typeof authenticatedChatIndexRoute
+  '/draw': typeof commonDrawIndexRoute
+  '/hello': typeof commonHelloIndexRoute
+  '/p24': typeof commonP24IndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
-  '/profile-card': typeof ProfileCardRoute
-  '/real-good': typeof RealGoodRoute
-  '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
-  '/hello/$roomId': typeof HelloRoomIdRoute
-  '/draw/': typeof DrawIndexRoute
-  '/hello/': typeof HelloIndexRoute
-  '/p24/': typeof P24IndexRoute
+  '/(common)': typeof commonRouteRouteWithChildren
+  '/(common)/profile-card': typeof commonProfileCardRoute
+  '/(common)/real-good': typeof commonRealGoodRoute
+  '/(common)/': typeof commonIndexRoute
   '/(authenticated)/agent/$chatId': typeof authenticatedAgentChatIdRoute
   '/(authenticated)/chat/$roomId': typeof authenticatedChatRoomIdRoute
+  '/(common)/hello/$roomId': typeof commonHelloRoomIdRoute
   '/(authenticated)/agent/': typeof authenticatedAgentIndexRoute
   '/(authenticated)/chat/': typeof authenticatedChatIndexRoute
+  '/(common)/draw/': typeof commonDrawIndexRoute
+  '/(common)/hello/': typeof commonHelloIndexRoute
+  '/(common)/p24/': typeof commonP24IndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/profile-card'
     | '/real-good'
-    | '/dashboard'
+    | '/'
+    | '/agent/$chatId'
+    | '/chat/$roomId'
     | '/hello/$roomId'
+    | '/agent/'
+    | '/chat/'
     | '/draw/'
     | '/hello/'
     | '/p24/'
-    | '/agent/$chatId'
-    | '/chat/$roomId'
-    | '/agent/'
-    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/profile-card'
     | '/real-good'
-    | '/dashboard'
+    | '/'
+    | '/agent/$chatId'
+    | '/chat/$roomId'
     | '/hello/$roomId'
+    | '/agent'
+    | '/chat'
     | '/draw'
     | '/hello'
     | '/p24'
-    | '/agent/$chatId'
-    | '/chat/$roomId'
-    | '/agent'
-    | '/chat'
   id:
     | '__root__'
-    | '/'
     | '/(authenticated)'
-    | '/profile-card'
-    | '/real-good'
-    | '/(authenticated)/dashboard'
-    | '/hello/$roomId'
-    | '/draw/'
-    | '/hello/'
-    | '/p24/'
+    | '/(common)'
+    | '/(common)/profile-card'
+    | '/(common)/real-good'
+    | '/(common)/'
     | '/(authenticated)/agent/$chatId'
     | '/(authenticated)/chat/$roomId'
+    | '/(common)/hello/$roomId'
     | '/(authenticated)/agent/'
     | '/(authenticated)/chat/'
+    | '/(common)/draw/'
+    | '/(common)/hello/'
+    | '/(common)/p24/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   authenticatedRouteRoute: typeof authenticatedRouteRouteWithChildren
-  ProfileCardRoute: typeof ProfileCardRoute
-  RealGoodRoute: typeof RealGoodRoute
-  HelloRoomIdRoute: typeof HelloRoomIdRoute
-  DrawIndexRoute: typeof DrawIndexRoute
-  HelloIndexRoute: typeof HelloIndexRoute
-  P24IndexRoute: typeof P24IndexRoute
+  commonRouteRoute: typeof commonRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/real-good': {
-      id: '/real-good'
-      path: '/real-good'
-      fullPath: '/real-good'
-      preLoaderRoute: typeof RealGoodRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile-card': {
-      id: '/profile-card'
-      path: '/profile-card'
-      fullPath: '/profile-card'
-      preLoaderRoute: typeof ProfileCardRouteImport
+    '/(common)': {
+      id: '/(common)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof commonRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(authenticated)': {
@@ -213,47 +195,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/(common)/': {
+      id: '/(common)/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof commonIndexRouteImport
+      parentRoute: typeof commonRouteRoute
     }
-    '/p24/': {
-      id: '/p24/'
+    '/(common)/real-good': {
+      id: '/(common)/real-good'
+      path: '/real-good'
+      fullPath: '/real-good'
+      preLoaderRoute: typeof commonRealGoodRouteImport
+      parentRoute: typeof commonRouteRoute
+    }
+    '/(common)/profile-card': {
+      id: '/(common)/profile-card'
+      path: '/profile-card'
+      fullPath: '/profile-card'
+      preLoaderRoute: typeof commonProfileCardRouteImport
+      parentRoute: typeof commonRouteRoute
+    }
+    '/(common)/p24/': {
+      id: '/(common)/p24/'
       path: '/p24'
       fullPath: '/p24/'
-      preLoaderRoute: typeof P24IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof commonP24IndexRouteImport
+      parentRoute: typeof commonRouteRoute
     }
-    '/hello/': {
-      id: '/hello/'
+    '/(common)/hello/': {
+      id: '/(common)/hello/'
       path: '/hello'
       fullPath: '/hello/'
-      preLoaderRoute: typeof HelloIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof commonHelloIndexRouteImport
+      parentRoute: typeof commonRouteRoute
     }
-    '/draw/': {
-      id: '/draw/'
+    '/(common)/draw/': {
+      id: '/(common)/draw/'
       path: '/draw'
       fullPath: '/draw/'
-      preLoaderRoute: typeof DrawIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hello/$roomId': {
-      id: '/hello/$roomId'
-      path: '/hello/$roomId'
-      fullPath: '/hello/$roomId'
-      preLoaderRoute: typeof HelloRoomIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(authenticated)/dashboard': {
-      id: '/(authenticated)/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof authenticatedDashboardRouteImport
-      parentRoute: typeof authenticatedRouteRoute
+      preLoaderRoute: typeof commonDrawIndexRouteImport
+      parentRoute: typeof commonRouteRoute
     }
     '/(authenticated)/chat/': {
       id: '/(authenticated)/chat/'
@@ -268,6 +250,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/agent/'
       preLoaderRoute: typeof authenticatedAgentIndexRouteImport
       parentRoute: typeof authenticatedRouteRoute
+    }
+    '/(common)/hello/$roomId': {
+      id: '/(common)/hello/$roomId'
+      path: '/hello/$roomId'
+      fullPath: '/hello/$roomId'
+      preLoaderRoute: typeof commonHelloRoomIdRouteImport
+      parentRoute: typeof commonRouteRoute
     }
     '/(authenticated)/chat/$roomId': {
       id: '/(authenticated)/chat/$roomId'
@@ -287,7 +276,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface authenticatedRouteRouteChildren {
-  authenticatedDashboardRoute: typeof authenticatedDashboardRoute
   authenticatedAgentChatIdRoute: typeof authenticatedAgentChatIdRoute
   authenticatedChatRoomIdRoute: typeof authenticatedChatRoomIdRoute
   authenticatedAgentIndexRoute: typeof authenticatedAgentIndexRoute
@@ -295,7 +283,6 @@ interface authenticatedRouteRouteChildren {
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
-  authenticatedDashboardRoute: authenticatedDashboardRoute,
   authenticatedAgentChatIdRoute: authenticatedAgentChatIdRoute,
   authenticatedChatRoomIdRoute: authenticatedChatRoomIdRoute,
   authenticatedAgentIndexRoute: authenticatedAgentIndexRoute,
@@ -305,15 +292,33 @@ const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
 const authenticatedRouteRouteWithChildren =
   authenticatedRouteRoute._addFileChildren(authenticatedRouteRouteChildren)
 
+interface commonRouteRouteChildren {
+  commonProfileCardRoute: typeof commonProfileCardRoute
+  commonRealGoodRoute: typeof commonRealGoodRoute
+  commonIndexRoute: typeof commonIndexRoute
+  commonHelloRoomIdRoute: typeof commonHelloRoomIdRoute
+  commonDrawIndexRoute: typeof commonDrawIndexRoute
+  commonHelloIndexRoute: typeof commonHelloIndexRoute
+  commonP24IndexRoute: typeof commonP24IndexRoute
+}
+
+const commonRouteRouteChildren: commonRouteRouteChildren = {
+  commonProfileCardRoute: commonProfileCardRoute,
+  commonRealGoodRoute: commonRealGoodRoute,
+  commonIndexRoute: commonIndexRoute,
+  commonHelloRoomIdRoute: commonHelloRoomIdRoute,
+  commonDrawIndexRoute: commonDrawIndexRoute,
+  commonHelloIndexRoute: commonHelloIndexRoute,
+  commonP24IndexRoute: commonP24IndexRoute,
+}
+
+const commonRouteRouteWithChildren = commonRouteRoute._addFileChildren(
+  commonRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   authenticatedRouteRoute: authenticatedRouteRouteWithChildren,
-  ProfileCardRoute: ProfileCardRoute,
-  RealGoodRoute: RealGoodRoute,
-  HelloRoomIdRoute: HelloRoomIdRoute,
-  DrawIndexRoute: DrawIndexRoute,
-  HelloIndexRoute: HelloIndexRoute,
-  P24IndexRoute: P24IndexRoute,
+  commonRouteRoute: commonRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
