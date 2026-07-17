@@ -1,61 +1,75 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "xyz",
-  "main": "worker/index.ts",
-  "compatibility_date": "2025-12-25",
-  "compatibility_flags": ["nodejs_compat"],
-  "assets": {
-    "directory": "./dist/",
-    "not_found_handling": "single-page-application",
-    "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
-  },
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "VEET",
-        "class_name": "Veet"
-      },
-      {
-        "name": "CHAT_ROOM",
-        "class_name": "ChatRoom"
-      },
-      {
-        "name": "CHAT_AGENT",
-        "class_name": "ChatAgent"
-      }
-    ]
-  },
-  "observability": {
-    "enabled": true
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["Veet"]
-    },
-    {
-      "tag": "v2",
-      "new_sqlite_classes": ["ChatRoom"]
-    },
-    {
-      "tag": "v3",
-      "new_sqlite_classes": ["ChatAgent"]
-    }
-  ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_id": "780eda95-8ff3-4dce-9148-f9d1dde20e1b",
-      "database_name": "db",
-      "migrations_dir": "./migrations"
-    }
-  ],
-  "routes": [
-    {
-      "pattern": "zzwlove.xyz",
-      "zone_name": "zzwlove.xyz",
-      "custom_domain": true
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "xyz",
+	"main": "worker/index.ts",
+	"compatibility_date": "2025-12-25",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"directory": "./dist/",
+		"not_found_handling": "single-page-application",
+		"binding": "ASSETS",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "VEET",
+				"class_name": "Veet"
+			},
+			{
+				"name": "CHAT_ROOM",
+				"class_name": "ChatRoom"
+			},
+			{
+				"name": "CHAT_AGENT",
+				"class_name": "ChatAgent"
+			}
+		]
+	},
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"AI_BASE_URL": "https://api.deepseek.com",
+		"AI_MODEL": "deepseek-v4-flash"
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"Veet"
+			]
+		},
+		{
+			"tag": "v2",
+			"new_sqlite_classes": [
+				"ChatRoom"
+			]
+		},
+		{
+			"tag": "v3",
+			"new_sqlite_classes": [
+				"ChatAgent"
+			]
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "780eda95-8ff3-4dce-9148-f9d1dde20e1b"
+		}
+	],
+	"routes": [
+		{
+			"pattern": "zzwlove.xyz",
+			"zone_name": "zzwlove.xyz",
+			"custom_domain": true,
+			"enabled": true,
+			"previews_enabled": false
+		}
+	]
 }

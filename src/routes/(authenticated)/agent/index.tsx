@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { chatAgentClient } from "@/lib/hono-client";
+import { setPendingAgentMessage } from "@/lib/pending-agent-message";
 import {
   ArrowUp,
   Bot,
@@ -48,7 +49,8 @@ function RouteComponent() {
     }),
     onSuccess: async ({ chatId, firstMessage }) => {
       const trimmedMessage = firstMessage.trim();
-      await queryClient.invalidateQueries({ queryKey: ["agent-chats"] });
+      setPendingAgentMessage(chatId, trimmedMessage);
+      queryClient.invalidateQueries({ queryKey: ["agent-chats"] });
       navigate({
         to: "/agent/$chatId",
         params: { chatId },

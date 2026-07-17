@@ -37,6 +37,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import {
+  clearPendingAgentMessage,
+  getPendingAgentMessage,
+} from "@/lib/pending-agent-message";
 import type { AgentMessage } from "@/types";
 
 export const Route = createFileRoute("/(authenticated)/agent/$chatId")({
@@ -90,7 +94,11 @@ function RouteComponent() {
   const [input, setInput] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState("");
+  const [pendingInitialMessage, setPendingInitialMessage] = useState(() =>
+    getPendingAgentMessage(chatId),
+  );
   const hasSentInitialMessage = useRef(false);
+  const previousChatId = useRef(chatId);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -246,8 +254,12 @@ function RouteComponent() {
   }, [messagesQuery.data, setMessages]);
 
   useEffect(() => {
+    if (previousChatId.current === chatId) return;
+
+    previousChatId.current = chatId;
     hasSentInitialMessage.current = false;
     setInput("");
+    setPendingInitialMessage(getPendingAgentMessage(chatId));
   }, [chatId]);
 
   useEffect(() => {
@@ -255,6 +267,8 @@ function RouteComponent() {
 
     hasSentInitialMessage.current = true;
     sendMessage({ text: q });
+    setPendingInitialMessage(undefined);
+    clearPendingAgentMessage(chatId);
     navigate({
       to: "/agent/$chatId",
       params: { chatId },
@@ -359,7 +373,18 @@ function RouteComponent() {
             <div className="flex h-full min-h-0 flex-col">
               <Conversation className="apple-scrollbar min-h-0">
                 <ConversationContent className="min-h-full px-4 py-8 sm:px-8 lg:px-12">
-                  {messagesQuery.isPending ? (
+                  {pendingInitialMessage ? (
+                    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+                      <Message
+                        from="user"
+                        className="ml-auto max-w-[78%] sm:max-w-[68%]"
+                      >
+                        <MessageContent className="rounded-[1.65rem] rounded-br-md bg-[#007aff] px-5 py-4 text-sm leading-7 text-white shadow-sm shadow-blue-500/20 sm:px-6 sm:py-5 sm:text-base">
+                          {pendingInitialMessage}
+                        </MessageContent>
+                      </Message>
+                    </div>
+                  ) : messagesQuery.isPending ? (
                     <div className="mx-auto w-full max-w-3xl space-y-4">
                       {Array.from({ length: 4 }).map((_, index) => (
                         <div
@@ -399,6 +424,9 @@ function RouteComponent() {
                         const isLastMessage =
                           messageIndex === messages.length - 1;
                         const messageText = getMessageText(message);
+                        const hasWeatherTool = message.parts.some(
+                          (part) => part.type === "tool-getWeather",
+                        );
 
                         return (
                           <Fragment key={message.id}>
@@ -407,12 +435,15 @@ function RouteComponent() {
                               className={cn(
                                 message.role === "user"
                                   ? "ml-auto max-w-[78%] sm:max-w-[68%]"
+                                  : hasWeatherTool
+                                    ? "mr-auto w-[calc(100vw-2rem)] max-w-full sm:w-[32rem]"
                                   : "mr-auto max-w-[84%] sm:max-w-[72%]",
                               )}
                             >
                               <MessageContent
                                 className={cn(
                                   "text-sm leading-7 sm:text-base",
+                                  hasWeatherTool && "w-full",
                                   message.role === "user"
                                     ? "rounded-[1.65rem] rounded-br-md bg-[#007aff] px-5 py-4 text-white shadow-sm shadow-blue-500/20 sm:px-6 sm:py-5"
                                     : "bg-transparent px-0 py-1 text-[#1d1d1f] shadow-none dark:text-[#f5f5f7]",

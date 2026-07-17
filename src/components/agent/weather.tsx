@@ -122,7 +122,7 @@ type WeatherAtLocation = {
 const SAMPLE = {
   latitude: 37.763_283,
   longitude: -122.412_86,
-  generationtime_ms: 0.027_894_973_754_882_812,
+  generationtime_ms: Number("0.027894973754882812"),
   utc_offset_seconds: 0,
   timezone: "GMT",
   timezone_abbreviation: "GMT",
@@ -276,6 +276,51 @@ const SAMPLE = {
 
 function n(num: number): number {
   return Math.ceil(num);
+}
+
+export function WeatherSkeleton(): React.JSX.Element {
+  return (
+    <div
+      className="relative flex min-h-60 w-full flex-col gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600 p-4 shadow-lg"
+      aria-label="正在加载天气"
+      role="status"
+    >
+      <div className="absolute inset-0 animate-pulse bg-white/10" />
+      <div className="relative z-10 flex flex-1 flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-24 rounded bg-white/30" />
+          <div className="h-3 w-20 rounded bg-white/20" />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-8 rounded-full bg-white/25" />
+            <div className="h-9 w-16 rounded bg-white/30" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-3 w-12 rounded bg-white/25" />
+            <div className="h-3 w-12 rounded bg-white/20" />
+          </div>
+        </div>
+        <div className="flex-1 rounded-xl bg-white/10 p-3">
+          <div className="mb-3 h-3 w-16 rounded bg-white/20" />
+          <div className="flex justify-between gap-2">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="flex flex-1 flex-col items-center gap-2">
+                <div className="h-3 w-full max-w-7 rounded bg-white/20" />
+                <div className="size-4 rounded-full bg-white/25" />
+                <div className="h-3 w-full max-w-6 rounded bg-white/20" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <div className="h-3 w-20 rounded bg-white/20" />
+          <div className="h-3 w-20 rounded bg-white/20" />
+        </div>
+      </div>
+      <span className="sr-only">正在加载天气</span>
+    </div>
+  );
 }
 
 export function Weather({

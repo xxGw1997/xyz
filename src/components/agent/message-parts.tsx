@@ -5,7 +5,7 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import type { AgentMessage } from "@/types";
-import { Weather } from "./weather";
+import { Weather, WeatherSkeleton } from "./weather";
 
 type MessagePart = AgentMessage["parts"][number];
 
@@ -17,7 +17,7 @@ function ToolPart({
   onApproval: (approval: { id: string; approved: boolean }) => void;
 }) {
   if (part.type === "tool-getWeather") {
-    switch (part.state) {
+      switch (part.state) {
       case "input-streaming":
         return <div>正在准备天气查询...</div>;
       case "input-available":
@@ -51,9 +51,11 @@ function ToolPart({
           </div>
         );
       case "approval-responded":
-        return (
+        return part.approval.approved ? (
+          <WeatherSkeleton />
+        ) : (
           <div className="my-2 text-xs text-muted-foreground">
-            天气查询已{part.approval.approved ? "同意" : "拒绝"}
+            天气查询已拒绝
           </div>
         );
       case "output-available":
